@@ -1,17 +1,17 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Backend: CrawlerApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="local"/>
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.musinsa.crawler.CrawlerApplication"/>
-    <module name="brand-social-crawler.main"/>
-    <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8"/>
+    <option name="ACTIVE_PROFILES" value="local" />
     <envs>
-      <env name="SPRING_DATASOURCE_URL" value="jdbc:mysql://localhost:3306/crawlerdb?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8&amp;serverTimezone=Asia/Seoul"/>
-      <env name="SPRING_DATASOURCE_USERNAME" value="crawler"/>
-      <env name="SPRING_DATASOURCE_PASSWORD" value="crawler1234"/>
-      <env name="SPRING_PROFILES_ACTIVE" value="local"/>
+      <env name="SPRING_DATASOURCE_URL" value="jdbc:mysql://localhost:3306/crawlerdb?useSSL=false&amp;allowPublicKeyRetrieval=true&amp;characterEncoding=UTF-8&amp;serverTimezone=Asia/Seoul" />
+      <env name="SPRING_DATASOURCE_USERNAME" value="crawler" />
+      <env name="SPRING_DATASOURCE_PASSWORD" value="crawler1234" />
+      <env name="SPRING_PROFILES_ACTIVE" value="local" />
     </envs>
+    <module name="brand-social-crawler.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.musinsa.crawler.CrawlerApplication" />
+    <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8" />
     <method v="2">
-      <option name="Make" enabled="true"/>
+      <option name="Make" enabled="true" />
     </method>
   </configuration>
 </component>

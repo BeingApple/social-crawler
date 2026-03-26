@@ -1,4 +1,4 @@
-import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { Box, Typography, List, ListItemButton, ListItemText, Divider } from '@mui/material'
 import PostListPage from './pages/PostListPage'
 import DashboardPage from './pages/DashboardPage'
@@ -134,6 +134,7 @@ export default function App() {
 
         <Box component="main" sx={{ flex: 1, p: 3, overflow: 'auto' }}>
           <Routes>
+            <Route path="/" element={<Navigate to="/accounts" replace />} />
             <Route path="/dummy" element={<PostListPage />} />
             <Route path="/accounts" element={<DashboardPage />} />
             <Route path="/crawling" element={<CrawlingStatusPage />} />
