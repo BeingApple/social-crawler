@@ -1,24 +1,32 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Crawler: main" type="PythonConfigurationType" factoryName="Python">
-    <module name="brand-social-crawler"/>
-    <option name="INTERPRETER_OPTIONS" value=""/>
-    <option name="PARENT_ENVS" value="true"/>
+    <module name="crawler" />
+    <option name="ENV_FILES" value="" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="PARENT_ENVS" value="true" />
     <envs>
-      <env name="DB_HOST" value="localhost"/>
-      <env name="DB_PORT" value="3306"/>
-      <env name="DB_NAME" value="crawlerdb"/>
-      <env name="DB_USER" value="crawler"/>
-      <env name="DB_PASSWORD" value="crawler1234"/>
-      <env name="CRAWL_INTERVAL_SEC" value="60"/>
-      <env name="PYTHONPATH" value="$PROJECT_DIR$/crawler"/>
+      <env name="PYTHONUNBUFFERED" value="1" />
+      <env name="DB_HOST" value="localhost" />
+      <env name="DB_PORT" value="3306" />
+      <env name="DB_NAME" value="crawlerdb" />
+      <env name="DB_USER" value="crawler" />
+      <env name="DB_PASSWORD" value="crawler1234" />
+      <env name="CRAWL_INTERVAL_SEC" value="60" />
+      <env name="PYTHONPATH" value="$PROJECT_DIR$/crawler" />
     </envs>
-    <option name="SDK_HOME" value="$PROJECT_DIR$/crawler/.venv/bin/python"/>
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/crawler"/>
-    <option name="IS_MODULE_SDK" value="true"/>
-    <option name="ADD_CONTENT_ROOTS" value="true"/>
-    <option name="ADD_SOURCE_ROOTS" value="true"/>
-    <option name="SCRIPT_NAME" value="-m src.main"/>
-    <option name="MODULE_MODE" value="true"/>
-    <method v="2"/>
+    <option name="SDK_HOME" value="$PROJECT_DIR$/crawler/.venv/bin/python" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/crawler" />
+    <option name="IS_MODULE_SDK" value="true" />
+    <option name="ADD_CONTENT_ROOTS" value="true" />
+    <option name="ADD_SOURCE_ROOTS" value="true" />
+    <option name="RUN_TOOL" value="" />
+    <option name="SCRIPT_NAME" value="src.main" />
+    <option name="PARAMETERS" value="" />
+    <option name="SHOW_COMMAND_LINE" value="false" />
+    <option name="EMULATE_TERMINAL" value="false" />
+    <option name="MODULE_MODE" value="true" />
+    <option name="REDIRECT_INPUT" value="false" />
+    <option name="INPUT_FILE" value="" />
+    <method v="2" />
   </configuration>
 </component>

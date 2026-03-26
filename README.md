@@ -6,78 +6,157 @@
 
 ---
 
-## 배경
-
-기존에는 뉴스만 크롤링하고 있었으나, 도메스틱 브랜드의 정보는 인스타그램·틱톡 등 SNS에 집중되어 있어 소셜 미디어 크롤링 시스템 구축이 필요하다.
-
-## 목적
-
-시장현황 파악 — 팝업 오픈 등 최신 브랜드 소식을 빠르게 수집하고 대응
-
----
-
-## 수집 대상 플랫폼
-
-| 플랫폼 | 수집 유형 |
-|--------|-----------|
-| Instagram | 릴스 (Reels) |
-| TikTok | 영상 게시물 |
-| X (Twitter) | 게시물 (트윗) |
-
----
-
-## 수집 방식
-
-- **대상**: 브랜드 공식 계정 데이터 + 검색어 기반 (병행)
-- **주기**: 매일 전날 데이터 크롤링
-- **후처리**: 정크 키워드 필터링 + 중복 제거
-- **저장**: 모든 원본 데이터 DB 저장
-
----
-
-## 결과물 전달
+## 프로젝트 구조
 
 ```
-수집된 원본 데이터
-       │
-       ▼
-    DB 저장
-       │
-       ├─→ Claude Code 프롬프트 (관리자 입력) → AI 요약 → Slack 알림
-       │
-       └─→ 별도 홈페이지에서 조회
+brand-social-crawler/
+├── crawler/          # Python 배치 크롤러 (Playwright + SQLAlchemy)
+├── backend/          # Spring Boot REST API (Java 21)
+├── frontend/         # React + TypeScript 어드민 대시보드 (Vite + MUI)
+├── db/init/          # MySQL 초기 DDL (자동 실행)
+├── docker-compose.yml
+└── .env.example
 ```
 
-- Slack Hook / Claude Hook: 무신사 제공
-- 관리자가 Claude Code 프롬프트를 직접 입력하여 요약 기준 조정 가능
+### 서비스 구성
+
+| 서비스 | 기술 스택 | 포트 | 설명 |
+|--------|-----------|------|------|
+| `db` | MySQL 8.0 | 3306 | Aurora MySQL 8.0 호환 |
+| `crawler` | Python 3.11, Playwright | — | 주기적 크롤링 배치 |
+| `backend` | Java 21, Spring Boot 3.3 | 8080 | 어드민 REST API |
+| `frontend` | React 18, TypeScript, Vite | 3000 | 어드민 대시보드 |
+
+### 컨테이너 통신
+
+```
+crawler ──write──► db:3306
+backend ──read───► db:3306
+frontend :3000 ──/api/*──► backend:8080
+```
 
 ---
 
-## 인프라
+## 실행 방법
 
-- 서버: dev EC2
-- DB: dev DB (무신사 내부)
+### 사전 준비
+
+```bash
+cp .env.example .env
+```
+
+### 방법 1 — 전체 Docker 실행 (배포/검증)
+
+```bash
+docker compose up --build
+```
+
+| URL | 설명 |
+|-----|------|
+| http://localhost:3000 | 어드민 대시보드 |
+| http://localhost:8080/api/posts | REST API |
+
+### 방법 2 — 로컬 개발 (프론트/백엔드 핫리로드)
+
+DB와 크롤러만 Docker로 띄우고, 백엔드·프론트는 로컬에서 실행한다.
+
+**① DB + 크롤러 Docker 실행**
+```bash
+docker compose up db crawler
+```
+
+**② Spring Boot 로컬 실행** (IntelliJ: `Backend: CrawlerApplication`)
+```bash
+cd backend
+./gradlew bootRun
+```
+
+**③ 프론트 로컬 실행** (IntelliJ: `Frontend: dev`)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+> 프론트 `/api/*` 요청은 Vite 프록시를 통해 `localhost:8080`으로 자동 전달된다.
 
 ---
 
-## 사전 준비 사항
+## IntelliJ 실행 구성
 
-프로젝트 시작 전 아래 항목 제공 필요:
+프로젝트를 IntelliJ에서 열면 아래 실행 구성이 자동으로 등록된다.
 
-- [ ] 각 플랫폼별 브랜드 공식 계정 정보 목록
-- [ ] 공통화된 크롤링 대상 컬럼 정의
-- [ ] 기존 뉴스 크롤링 앱 스크립트 (스프레드시트 스크립트) 공유
+| 구성명 | 설명 |
+|--------|------|
+| `Docker: Full Stack` | 전체 4개 서비스 Docker 실행 |
+| `Docker: DB & Crawler` | DB + 크롤러만 Docker 실행 (로컬 개발용) |
+| `Backend: CrawlerApplication` | Spring Boot 로컬 실행 (localhost:3306 연결) |
+| `Frontend: dev` | Vite 로컬 개발 서버 실행 |
+| `Crawler: main` | Python 크롤러 로컬 실행 |
+
+> **IntelliJ Gradle import**: `backend/build.gradle` 우클릭 → **Link Gradle Project**
 
 ---
 
-## 우려사항 / 제약
+## 환경 변수
 
-- 로그인이 필요한 플랫폼의 경우 크롤링이 불가할 수 있음
-- 각 플랫폼 ToS 및 robots.txt 준수 필요
-- API rate limit 대응 로직 필요
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `MYSQL_ROOT_PASSWORD` | `root1234` | MySQL root 비밀번호 |
+| `MYSQL_DATABASE` | `crawlerdb` | DB명 |
+| `MYSQL_USER` | `crawler` | DB 사용자 |
+| `MYSQL_PASSWORD` | `crawler1234` | DB 비밀번호 |
+| `CRAWL_INTERVAL_SEC` | `3600` | 크롤링 주기 (초) |
+| `VITE_API_BASE_URL` | `http://localhost:8080` | 프론트 API 엔드포인트 |
+
+---
+
+## DB 스키마
+
+초기 스키마는 `db/init/01_schema.sql`에서 관리하며, Docker 컨테이너 최초 실행 시 자동 적용된다.
+
+```sql
+-- brand: 플랫폼별 계정 단위
+brand_id, brand_name, platform, account_handle, is_active, created_at, updated_at
+
+-- post: 수집된 게시물 원본
+post_id, brand_id, platform, external_post_id,
+content, media_urls(JSON), hashtags(JSON),
+likes, comments, shares, views,
+posted_at, crawled_at
+```
+
+---
+
+## 수집 대상 및 방식
+
+**플랫폼 우선순위**
+
+| 우선순위 | 플랫폼 | 수집 대상 |
+|----------|--------|-----------|
+| 1차 | Instagram | 피드, 릴스, 스토리 |
+| 1차 | YouTube | 영상, 쇼츠 |
+| 2차 | X (Twitter) | 트윗 |
+| 2차 | TikTok | 영상 |
+
+**크롤링 CASE**
+
+- **CASE 1**: 브랜드 공식 계정(KR + HQ) 게시글 전체 수집
+- **CASE 2**: 브랜드명 키워드 검색 → 광고/프로모션 키워드 필터링 (인플루언서 광고 포착)
+
+---
+
+## 주요 제약사항
+
+- 로그인 필요 플랫폼은 크롤링 불가할 수 있음
+- 각 플랫폼 ToS 및 robots.txt 준수 필수
+- 공개 비즈니스 계정 데이터만 수집 (개인정보보호법 PIPA)
+- 중복 수집 방지: `platform + external_post_id` 기준 unique constraint
 
 ---
 
 ## 관련 링크
 
-- Jira Epic: [MZMSS-31](https://jira.team.musinsa.com/browse/MZMSS-31)
+- Jira: [MZMSS-31](https://jira.team.musinsa.com/browse/MZMSS-31)
+- 명세서: [Confluence](https://wiki.team.musinsa.com/wiki/spaces/MEGAZONE/pages/356399021/)
+- 브랜드 계정 정의: [스프레드시트](https://docs.google.com/spreadsheets/d/1le01exs1CFnnHMgYVU20ohQP1Rzg6TN0A_uNE3fuRbU/edit?gid=0#gid=0)
