@@ -89,7 +89,8 @@ npm run dev
 | 구성명 | 설명 |
 |--------|------|
 | `Docker: Full Stack` | 전체 4개 서비스 Docker 실행 |
-| `Docker: DB & Crawler` | DB + 크롤러만 Docker 실행 (로컬 개발용) |
+| `Docker: DB & Crawler` | DB + 크롤러만 Docker 실행 |
+| `Docker: DB only` | DB만 Docker 실행 (백엔드/크롤러 로컬 개발용) |
 | `Backend: CrawlerApplication` | Spring Boot 로컬 실행 (localhost:3306 연결) |
 | `Frontend: dev` | Vite 로컬 개발 서버 실행 |
 | `Crawler: main` | Python 크롤러 로컬 실행 |
