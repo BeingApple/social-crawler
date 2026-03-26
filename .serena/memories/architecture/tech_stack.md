@@ -1,46 +1,59 @@
-# brand-social-crawler - 예상 기술 스택
+# brand-social-crawler - 실제 기술 스택
 
-**분석 일시**: 2026-03-20
-**유형**: 추론 (빈 레포지토리)
+**분석 일시**: 2026-03-26
+**유형**: 실제 구현 기반
 
-## 권장 기술 스택
+## Crawler (Python)
 
-### 언어: Python 3.11+
-- 크롤링 생태계 (Scrapy, Playwright, BeautifulSoup) 최강
-- 데이터 처리 (pandas, pydantic) 풍부
-- 무신사 백엔드 스택과 독립적으로 운영 가능
+| 항목 | 버전/선택 |
+|------|----------|
+| Python | 3.11 (Dockerfile: `python:3.11-slim`) |
+| 크롤링 | Playwright 1.44.0 (Chromium headless), BeautifulSoup4 4.12.3 |
+| HTTP | httpx 0.27.0 |
+| ORM | SQLAlchemy 2.0.30 (`mapped_column` 스타일) |
+| DB 드라이버 | PyMySQL 1.1.1 + cryptography 42.x |
+| 스케줄러 | schedule 1.2.2 (`CRAWL_INTERVAL_SEC` 환경변수로 주기 조절) |
+| 환경변수 | python-dotenv 1.0.1 |
 
-### 크롤링 프레임워크
-- **Playwright** (우선) — 헤드리스 브라우저, JS 렌더링 필수인 SNS 대응
-- **Scrapy** — 대용량 정적 페이지, 파이프라인 내장
-- **httpx + asyncio** — API 기반 수집 (공식 API 활용 시)
+## Backend (Java)
 
-### 공식 API 활용
-- Instagram Graph API (Meta Business API)
-- YouTube Data API v3
-- TikTok Research API (제한적)
+| 항목 | 버전/선택 |
+|------|----------|
+| Java | 21 (eclipse-temurin:21) |
+| Framework | Spring Boot 3.3.0 |
+| ORM | Spring Data JPA + Hibernate |
+| DB 드라이버 | `com.mysql:mysql-connector-j` |
+| 편의 | Lombok (getter, builder, RequiredArgsConstructor) |
+| 빌드 | Gradle 8.x (gradlew wrapper 포함) |
+| Dockerfile | 멀티스테이지: JDK 빌드 → JRE 런타임 |
 
-### 스케줄러
-- **Apache Airflow** — 워크플로우 DAG, 무신사 규모에 적합
-- **Celery + Redis** — 분산 태스크 큐, 간단한 스케줄링
-- **APScheduler** — 경량 스케줄러 (소규모 시작 시)
+## Frontend (TypeScript)
 
-### 스토리지
-- **PostgreSQL** — 정형 데이터 (브랜드 메타, 지표 시계열)
-- **MongoDB** — 비정형 원본 데이터 (게시물 전문, 댓글)
-- **Redis** — 캐싱, 중복 URL 필터, rate limit 상태
-- **S3 / MinIO** — 이미지/영상 원본 보관
+| 항목 | 버전/선택 |
+|------|----------|
+| 언어 | **TypeScript 5.5** (`strict: true`, `noUnusedLocals/Parameters`) |
+| Framework | React 18.3 |
+| 빌드 도구 | Vite 5.3 (`vite.config.ts`) |
+| UI 라이브러리 | MUI v5 (Material UI) + `@mui/x-data-grid` v7 |
+| 라우팅 | React Router v6 |
+| HTTP 클라이언트 | axios 1.7 (제네릭 타입 적용) |
+| 서빙 | nginx:alpine (SPA 라우팅 + `resolver 127.0.0.11` 동적 프록시) |
+| TS 설정 | `tsconfig.json` (루트) → `tsconfig.app.json` (src) + `tsconfig.node.json` (vite) |
 
-### 메시지 큐
-- **Kafka** — 대용량 이벤트 스트리밍 (무신사 규모)
-- **RabbitMQ** — 경량 메시지 큐 (소규모 시작 시)
+## Database
 
-### 인프라
-- Docker + Kubernetes (무신사 표준 인프라 추정)
-- Prometheus + Grafana — 크롤링 성능 모니터링
+| 항목 | 선택 |
+|------|------|
+| 엔진 | MySQL 8.0 (`mysql:8.0` 이미지, Aurora MySQL 8.0 호환) |
+| 초기화 | `db/init/01_schema.sql` 자동 실행 |
+| 스키마 관리 | `ddl-auto: none` — SQL 파일로 직접 관리 |
+| JSON 컬럼 | `media_urls`, `hashtags` — MySQL JSON 타입 |
 
-### 코드 품질
-- **Ruff** — 린터/포매터 (Black + flake8 대체)
-- **mypy** — 타입 체크
-- **pytest** — 테스트
-- **pre-commit** — 커밋 전 자동 검사
+## 인프라
+
+| 항목 | 선택 |
+|------|------|
+| 오케스트레이션 | Docker Compose (`version: "3.9"`) |
+| 데이터 보존 | Named volume `db_data` |
+| 헬스체크 | `mysqladmin ping` → crawler/backend `depends_on condition: service_healthy` |
+| 개발 핫리로드 | crawler 소스 volume mount (`./crawler/src:/app/src`) |

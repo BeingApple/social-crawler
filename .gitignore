@@ -26,9 +26,16 @@ ENV/
 .env
 .env.*
 !.env.example
+# crawler 로컬 실행용 .env는 추적 (민감 정보 없는 로컬 기본값)
+!crawler/.env
 
-# IDE
-.idea/
+# IDE — .idea/ 전체 제외하되 팀 공유 파일만 허용
+.idea/*
+!.idea/runConfigurations/
+!.idea/gradle.xml
+!.idea/misc.xml
+!.idea/modules.xml
+!.idea/vcs.xml
 .vscode/
 *.swp
 *.swo
@@ -47,6 +54,15 @@ htmlcov/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Gradle
+.gradle/
+backend/build/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
 
 # Claude Code
 .claude/agent-memory/

@@ -1,43 +1,105 @@
-# brand-social-crawler - 데이터 아키텍처 패턴
+# brand-social-crawler - 실제 데이터 아키텍처 패턴
 
-**분석 일시**: 2026-03-20
+**분석 일시**: 2026-03-26
 
-## 데이터 흐름 (추론)
+## 실제 데이터 흐름
 
 ```
-[SNS 플랫폼] → [Crawler] → [Message Queue] → [Parser] → [Storage]
-                                                              ↓
-                                                    [API Server] → [내부 소비자]
+[SNS 플랫폼]
+    │
+    ▼
+[crawler-python]
+    │  Playwright 렌더링 → BS4 파싱
+    │  중복 체크(ORM) → INSERT
+    ▼
+[crawler-db:3306 / MySQL 8.0]
+    │
+    ▼
+[crawler-backend:8080]
+    │  Spring Data JPA → Pageable 조회
+    ▼
+[crawler-frontend:3000]
+    │  axios GET /api/posts → MUI DataGrid
+    ▼
+[사용자 브라우저]
 ```
 
-## 스토리지 레이어 분리
+## 실제 스키마
 
-### Writer 레이어
-- 크롤러 → Kafka/RabbitMQ → Consumer → DB Insert
-- 원본 raw 데이터는 MongoDB 또는 S3에 별도 보관
-- 정제된 지표 데이터는 PostgreSQL 시계열 테이블
+### brand 테이블
+```sql
+CREATE TABLE brand (
+    brand_id       BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    brand_name     VARCHAR(100) NOT NULL,
+    platform       VARCHAR(30)  NOT NULL,  -- instagram | tiktok | twitter
+    account_handle VARCHAR(100) NOT NULL,
+    is_active      TINYINT(1)   DEFAULT 1,
+    created_at     DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_brand_platform_handle (brand_name, platform, account_handle)
+);
+```
 
-### Reader 레이어
-- PostgreSQL Read Replica → API 응답
-- Redis 캐시 → 자주 조회되는 브랜드 지표
+### post 테이블
+```sql
+CREATE TABLE post (
+    post_id          BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    brand_id         BIGINT       NOT NULL,
+    platform         VARCHAR(30)  NOT NULL,
+    external_post_id VARCHAR(200) NOT NULL,
+    content          TEXT,
+    media_urls       JSON,
+    hashtags         JSON,
+    likes            INT          DEFAULT 0,
+    comments         INT          DEFAULT 0,
+    shares           INT          DEFAULT 0,
+    views            BIGINT       DEFAULT 0,
+    posted_at        DATETIME,
+    crawled_at       DATETIME     DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_platform_post (platform, external_post_id),
+    FOREIGN KEY (brand_id) REFERENCES brand(brand_id)
+);
+```
 
-## 핵심 데이터 모델 (예상)
+## 중복 수집 방지 (이중 가드)
 
-### brands 테이블
-- brand_id, brand_name, musinsa_brand_code
-- instagram_handle, youtube_channel_id, tiktok_username
-- created_at, updated_at, is_active
+| 레이어 | 방법 |
+|--------|------|
+| DB | `UNIQUE KEY (platform, external_post_id)` — MySQL에서 중복 Insert 거부 |
+| Application | Python ORM `filter_by(platform=, external_post_id=).first()` 후 신규만 Insert |
 
-### social_metrics 테이블 (시계열)
-- brand_id, platform, metric_type, metric_value
-- collected_at, period (daily/hourly)
+> Redis SET 방식은 현재 미구현. 향후 대용량 처리 시 추가 권장.
 
-### posts 테이블
-- post_id, brand_id, platform, external_post_id
-- content, media_urls, hashtags
-- likes, comments, shares, views
-- posted_at, crawled_at
+## SQLAlchemy 패턴 (Crawler)
 
-## 중복 수집 방지
-- Redis SET에 post_id 저장 (TTL 30일)
-- DB unique constraint on (platform, external_post_id)
+```python
+# 세션 사용 패턴 (with 컨텍스트 매니저)
+with SessionLocal() as session:
+    obj = session.query(Post).filter_by(...).first()
+    if not obj:
+        session.add(Post(**row))
+    session.commit()
+```
+
+## JPA 패턴 (Backend)
+
+```java
+// 서버사이드 페이징
+Page<Post> page = postRepository.findByPlatform(platform, pageable);
+return page.map(PostResponse::from);
+
+// DTO 변환: static factory
+PostResponse.from(post)  // Builder 패턴
+```
+
+## DDL 관리 전략
+
+- **초기화**: `db/init/01_schema.sql` → MySQL 컨테이너 최초 기동 시 자동 실행
+- **마이그레이션**: `ddl-auto: none` (Spring Boot) — 스키마 변경은 SQL 파일로만 관리
+- **샘플 데이터**: `01_schema.sql` 하단 `INSERT IGNORE` 3개 브랜드 포함
+
+## JSON 컬럼 처리
+
+- **MySQL**: `media_urls JSON`, `hashtags JSON` 컬럼 타입
+- **Python ORM**: `mapped_column(JSON)` → list 자동 직렬화/역직렬화
+- **Java JPA**: `@JdbcTypeCode(SqlTypes.JSON)` + `List<String>` 타입 매핑
