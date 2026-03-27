@@ -1,4 +1,5 @@
 """DB 연결 및 세션 팩토리."""
+'''
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
@@ -19,3 +20,4 @@ SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 class Base(DeclarativeBase):
     pass
+'''

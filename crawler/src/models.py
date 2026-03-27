@@ -1,4 +1,5 @@
 """SQLAlchemy ORM 모델 — DB 스키마와 동일."""
+"""
 from datetime import datetime
 from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -37,3 +38,4 @@ class Post(Base):
     crawled_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     brand: Mapped["Brand"] = relationship("Brand", back_populates="posts")
+"""

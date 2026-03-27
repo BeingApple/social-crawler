@@ -4,6 +4,8 @@
 실제 운영 시에는 플랫폼별로 별도 모듈로 분리하세요.
 여기서는 더미 데이터를 사용해 DB Insert 흐름만 확인합니다.
 """
+
+'''
 from __future__ import annotations
 
 import logging
@@ -120,3 +122,4 @@ def run_all() -> None:
     #     _upsert_posts(rows)
 
     logger.info("=== 크롤링 완료 ===")
+'''

@@ -13,6 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Playwright 브라우저 설치 (Chromium만)
 RUN playwright install chromium --with-deps
 
-COPY src/ ./src/
+#COPY src/ ./src/
+COPY . ./crawler/
 
-CMD ["python", "-m", "src.main"]
+#CMD ["python", "-m", "src.main"]
+CMD ["python", "-m", "crawler.src.main"]
