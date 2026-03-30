@@ -148,7 +148,7 @@ class InstagramCrawler(BaseCrawler):
             return False
 
         try:
-            await page.goto(f"{self.BASE_URL}/accounts/login/", wait_until="networkidle")
+            await page.goto(f"{self.BASE_URL}/accounts/login/", wait_until="load")
             await self._random_delay(10, 20)
 
             # 쿠키 동의 버튼 (있으면 클릭)
@@ -192,7 +192,7 @@ class InstagramCrawler(BaseCrawler):
     async def _check_login_status(self, page: Page) -> bool:
         """로그인 상태 확인"""
         try:
-            await page.goto(self.BASE_URL, wait_until="networkidle", timeout=30000)
+            await page.goto(self.BASE_URL, wait_until="load", timeout=30000)
             await self._random_delay(10, 12)
 
             # 로그인 버튼이 보이면 미로그인 상태
@@ -270,18 +270,27 @@ class InstagramCrawler(BaseCrawler):
             profile_url: str,
             max_posts: int = 50,
             max_scroll_attempts: int = 10,
-    ) -> list[dict]:
+    ) -> tuple[list[dict], int]:
         """프로필 페이지 이동 전에 리스너를 등록하고, 첫 로드 + 스크롤 중 GraphQL 응답 수집"""
         nodes: list[dict] = []
         seen_ids: set[str] = set()  # pk와 code 모두 추적
+        follower_count: int = 0
         last_height = 0
         scroll_attempts = 0
 
         async def on_response(response) -> None:
+            nonlocal follower_count
             if "graphql/query" not in response.url or response.status != 200:
                 return
             try:
                 body = await response.json()
+                # 팔로워 수 (처음 한 번만 캡처)
+                if not follower_count:
+                    follower_count = (
+                        body.get("data", {})
+                        .get("user", {})
+                        .get("follower_count", 0)
+                    )
                 timeline = (
                     body.get("data", {})
                     .get("xdt_api__v1__feed__user_timeline_graphql_connection", {})
@@ -307,7 +316,7 @@ class InstagramCrawler(BaseCrawler):
         page.on("response", on_response)
 
         try:
-            await page.goto(profile_url, wait_until="networkidle", timeout=30000)
+            await page.goto(profile_url, wait_until="load", timeout=30000)
             await self._random_delay(10, 15)
 
             while len(nodes) < max_posts and scroll_attempts < max_scroll_attempts:
@@ -333,7 +342,7 @@ class InstagramCrawler(BaseCrawler):
         finally:
             page.remove_listener("response", on_response)
 
-        return nodes[:max_posts]
+        return nodes[:max_posts], follower_count
 
     def crawl_official_account(
             self,
@@ -383,7 +392,8 @@ class InstagramCrawler(BaseCrawler):
 
             # 리스너 등록 → 첫 로드 + 스크롤 중 GraphQL 응답을 모두 캡처
             profile_url = f"{self.BASE_URL}/{handle}/"
-            nodes = await self._scroll_and_intercept_graphql(page, profile_url, max_posts=50)
+            nodes, follower_count = await self._scroll_and_intercept_graphql(page, profile_url, max_posts=50)
+            logger.info("instagram @%s follower_count=%d", handle, follower_count)
 
             # 프로필 존재 확인 (goto 이후 현재 URL/콘텐츠 기준)
             if "페이지를 찾을 수 없습니다" in await page.content():
@@ -482,7 +492,7 @@ class InstagramCrawler(BaseCrawler):
                 try:
                     # 리스너 등록 → 첫 로드 + 스크롤 중 GraphQL 응답을 모두 캡처
                     tag_url = f"{self.BASE_URL}/explore/tags/{tag}/"
-                    nodes = await self._scroll_and_intercept_graphql(page, tag_url, max_posts=20)
+                    nodes, _ = await self._scroll_and_intercept_graphql(page, tag_url, max_posts=20)
 
                     for node in nodes:
                         post_data = self._node_to_post_data(node)
