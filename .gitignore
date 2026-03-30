@@ -26,8 +26,7 @@ ENV/
 .env
 .env.*
 !.env.example
-# crawler 로컬 실행용 .env는 추적 (민감 정보 없는 로컬 기본값)
-!crawler/.env
+!crawler/.env.example
 
 # IDE — .idea/ 전체 제외하되 팀 공유 파일만 허용
 .idea/*

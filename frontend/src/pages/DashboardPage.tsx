@@ -38,13 +38,13 @@ export default function DashboardPage() {
       {/* 필터 영역 */}
       <Paper elevation={1} sx={{ p: 2.5, mb: 3 }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField size="small" fullWidth label="담당자명" value={filters.managerName} onChange={handleText('managerName')} />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField size="small" fullWidth label="브랜드명" value={filters.brandName} onChange={handleText('brandName')} />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>소셜 미디어</InputLabel>
               <Select value={filters.socialMedia} label="소셜 미디어" onChange={handleSelect('socialMedia')}>
@@ -53,10 +53,10 @@ export default function DashboardPage() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField size="small" fullWidth label="계정 아이디" value={filters.accountId} onChange={handleText('accountId')} />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>계정 구분</InputLabel>
               <Select value={filters.accountType} label="계정 구분" onChange={handleSelect('accountType')}>
@@ -65,7 +65,7 @@ export default function DashboardPage() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>활성화 상태</InputLabel>
               <Select value={filters.status} label="활성화 상태" onChange={handleSelect('status')}>

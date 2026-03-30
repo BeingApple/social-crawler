@@ -1,48 +1,26 @@
-# brand-social-crawler - Project Overview
+# Project Overview (2026-03-30)
 
-**분석 일시**: 2026-03-26
-**분석 유형**: 실제 구현 기반 (4모듈 완성)
-**회사**: Musinsa (무신사)
+## 구조
+모노레포 멀티모듈: crawler(Python) / backend(Spring Boot) / frontend(React) / db(MySQL DDL)
 
-## 프로젝트 목적
+## Crawler 레이어
+- social/ : BaseCrawler ABC + InstagramCrawler (Playwright async)
+- service/ : CrawlService(오케스트레이터), SummaryService, MonitoringService
+- resource/ : BrandRepository, SocialPostRepository, CrawlJobRepository (PyMySQL raw cursor)
+- common/ : types(BrandTarget, SocialPost), utils, http, exceptions
+- notifier/ : SlackNotifier (웹훅)
+- config/ : DatabaseConfig (PyMySQL 싱글턴)
 
-무신사 입점 브랜드의 소셜 미디어 데이터(Instagram, TikTok, Twitter)를 자동 수집·저장하고,
-어드민 대시보드에서 조회할 수 있는 풀스택 크롤링 파이프라인.
+## Backend 레이어
+- api/controller/PostController -> domain/repository/PostRepository -> domain/entity/Post
+- Service 레이어 없음 (읽기 전용)
 
-## 4개 Docker 서비스 구성
+## Frontend 구조
+- pages: DashboardPage(계정리스트, 샘플), CrawlingStatusPage(크롤링현황, 샘플), PostListPage(게시물, API연동)
+- components/dashboard/DataTable, api/posts, types/{post,brand,crawling}, data/{sampleData,crawlingSampleData}
 
-| 서비스 | 컨테이너명 | 포트 | 기술 |
-|--------|-----------|------|------|
-| db | crawler-db | 3306 | MySQL 8.0 |
-| crawler | crawler-python | — | Python 3.11 + Playwright |
-| backend | crawler-backend | 8080 | Java 21 + Spring Boot 3.3 |
-| frontend | crawler-frontend | 3000 | React 18 + Vite + MUI v5 |
-
-## 실제 디렉토리 구조
-
-```
-brand-social-crawler/
-├── docker-compose.yml
-├── .env.example
-├── db/init/01_schema.sql
-├── crawler/src/
-│   ├── db.py          # SQLAlchemy 세션
-│   ├── models.py      # Brand, Post ORM
-│   ├── crawler.py     # Playwright + BS4
-│   └── main.py        # schedule 엔트리포인트
-├── backend/src/main/java/com/musinsa/crawler/
-│   ├── domain/entity/Post.java
-│   ├── domain/repository/PostRepository.java
-│   ├── api/controller/PostController.java
-│   └── api/dto/PostResponse.java
-└── frontend/src/
-    ├── main.jsx / App.jsx
-    ├── api/posts.js
-    └── pages/PostListPage.jsx
-```
-
-## 상태
-
-- 4모듈 구현 완료 (docker-compose 기반 로컬 실행 가능)
-- 실제 크롤링 로직은 `crawler.py`에 더미 Insert로 대체 (주석으로 실제 코드 안내)
-- 확장 포인트: 플랫폼별 크롤러 분리, Brand API 추가, social_metrics 테이블 추가
+## 개발 상태
+- Instagram 크롤러: 초기 구현 완료 (테스트 모드)
+- TikTok/Twitter: 미구현
+- CrawlService: 대부분 주석 (저장/필터/알림 미연결)
+- Frontend: DashboardPage, CrawlingStatusPage는 샘플데이터 기반

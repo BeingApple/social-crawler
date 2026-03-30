@@ -91,7 +91,7 @@ function Lnb() {
                 >
                   <ListItemText
                     primary={label}
-                    primaryTypographyProps={{ fontSize: 13, fontWeight: isActive ? 600 : 400 }}
+                    slotProps={{ primary: { fontSize: 13, fontWeight: isActive ? 600 : 400 } }}
                   />
                 </ListItemButton>
               )

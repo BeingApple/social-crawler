@@ -112,7 +112,7 @@ export default function CrawlingStatusPage() {
         <Grid container spacing={2}>
 
           {/* 업로드 기간 */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Typography variant="body2" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', minWidth: 72 }}>
                 업로드 기간
@@ -123,7 +123,7 @@ export default function CrawlingStatusPage() {
                 label="시작"
                 value={filters.dateFrom}
                 onChange={handleText('dateFrom')}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
                 sx={{ width: 160 }}
               />
               <Typography variant="body2" color="text.secondary">~</Typography>
@@ -133,14 +133,14 @@ export default function CrawlingStatusPage() {
                 label="끝"
                 value={filters.dateTo}
                 onChange={handleText('dateTo')}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
                 sx={{ width: 160 }}
               />
             </Box>
           </Grid>
 
           {/* 담당자명 */}
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <TextField
               size="small" fullWidth
               label="담당자명"
@@ -150,7 +150,7 @@ export default function CrawlingStatusPage() {
           </Grid>
 
           {/* 브랜드명 */}
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>브랜드명</InputLabel>
               <Select value={filters.brandName} label="브랜드명" onChange={handleSelect('brandName')}>
@@ -161,7 +161,7 @@ export default function CrawlingStatusPage() {
           </Grid>
 
           {/* 소셜 미디어 */}
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>소셜 미디어</InputLabel>
               <Select value={filters.socialMedia} label="소셜 미디어" onChange={handleSelect('socialMedia')}>
@@ -172,7 +172,7 @@ export default function CrawlingStatusPage() {
           </Grid>
 
           {/* 계정 구분 */}
-          <Grid item xs={12} sm={3}>
+          <Grid size={{ xs: 12, sm: 3 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>계정 구분</InputLabel>
               <Select value={filters.accountType} label="계정 구분" onChange={handleSelect('accountType')}>
