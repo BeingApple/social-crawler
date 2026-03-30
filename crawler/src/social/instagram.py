@@ -9,6 +9,7 @@ import re
 import time
 from dataclasses import dataclass
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any
 
@@ -104,8 +105,38 @@ class InstagramCrawler(BaseCrawler):
 
         # 봇 감지 우회 스크립트
         await self._context.add_init_script("""
+            // webdriver 플래그 제거
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
+
+            // 모바일(iPhone)은 plugins 없음
+            Object.defineProperty(navigator, 'plugins', { get: () => [] });
+
+            // 언어 설정 (ko-KR 우선)
+            Object.defineProperty(navigator, 'languages', { get: () => ['ko-KR', 'ko', 'en-US', 'en'] });
+
+            // 하드웨어 스펙 (iPhone 14 Pro Max 수준)
+            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 6 });
+            Object.defineProperty(navigator, 'platform', { get: () => 'iPhone' });
+
+            // window.chrome 객체 (모바일 Chrome에도 존재)
+            if (!window.chrome) {
+                window.chrome = {
+                    runtime: {},
+                    loadTimes: () => {},
+                    csi: () => {},
+                };
+            }
+
+            // Notification 권한 쿼리 우회 (headless 기본값 노출 방지)
+            if (navigator.permissions && navigator.permissions.query) {
+                const _origQuery = navigator.permissions.query.bind(navigator.permissions);
+                navigator.permissions.query = (params) => {
+                    if (params && params.name === 'notifications') {
+                        return Promise.resolve({ state: 'denied', onchange: null });
+                    }
+                    return _origQuery(params);
+                };
+            }
         """)
 
         return self._context
@@ -179,63 +210,33 @@ class InstagramCrawler(BaseCrawler):
             print("_check_login_status : " + e.__class__.__name__, e)
             return False
 
-    async def _parse_post_data(self, page: Page, shortcode: str) -> InstagramPageData | None:
-        """개별 게시물 페이지에서 데이터 추출"""
+    @staticmethod
+    def _node_to_post_data(node: dict) -> InstagramPageData | None:
+        """GraphQL 응답 노드에서 게시물 데이터 추출"""
         try:
-            url = f"{self.BASE_URL}/p/{shortcode}/"
-            await page.goto(url, wait_until="networkidle")
-            await self._random_delay(2, 4)
+            shortcode = node.get("code", "")
+            if not shortcode:
+                return None
 
-            # JSON-LD 또는 meta 태그에서 데이터 추출
-            content = ""
-            likes = 0
-            comments = 0
-            views = 0
-            posted_at = None
+            caption = node.get("caption") or {}
+            content = caption.get("text", "") if isinstance(caption, dict) else ""
 
-            # 캡션 추출
-            try:
-                caption_el = page.locator('h1, span:has-text("")').first
-                content = await caption_el.inner_text() if await caption_el.count() > 0 else ""
-            except Exception:
-                pass
+            taken_at = node.get("taken_at")
+            posted_at = datetime.fromtimestamp(taken_at, tz=ZoneInfo("Asia/Seoul")) if taken_at else None
 
-            # 좋아요 수 추출 (다양한 셀렉터 시도)
-            try:
-                likes_text = await page.locator('section span:has-text("좋아요"), section span:has-text("likes")').first.inner_text()
-                likes = self._parse_count(likes_text)
-            except Exception:
-                pass
-
-            # 조회수 추출 (릴스/동영상)
-            try:
-                views_text = await page.locator('span:has-text("회 재생"), span:has-text("views")').first.inner_text()
-                views = self._parse_count(views_text)
-            except Exception:
-                pass
-
-            # 게시 시간 추출
-            try:
-                time_el = page.locator("time")
-                if await time_el.count() > 0:
-                    datetime_str = await time_el.first.get_attribute("datetime")
-                    if datetime_str:
-                        posted_at = datetime.fromisoformat(datetime_str.replace("Z", "+00:00"))
-            except Exception:
-                pass
+            views = node.get("view_count") or node.get("play_count") or 0
 
             return InstagramPageData(
                 post_id=shortcode,
-                url=url,
+                url=f"https://www.instagram.com/p/{shortcode}/",
                 content=content,
-                likes=likes,
-                comments=comments,
+                likes=node.get("like_count", 0),
+                comments=node.get("comment_count", 0),
                 views=views,
                 posted_at=posted_at,
             )
-
         except Exception as e:
-            logger.warning("failed to parse post %s: %s", shortcode, e)
+            logger.warning("failed to parse graphql node: %s", e)
             return None
 
     @staticmethod
@@ -263,45 +264,76 @@ class InstagramCrawler(BaseCrawler):
         """봇 감지 방지를 위한 랜덤 대기"""
         await asyncio.sleep(random.uniform(min_sec, max_sec))
 
-    async def _scroll_and_collect_posts(
+    async def _scroll_and_intercept_graphql(
             self,
             page: Page,
-            start_dt: datetime,
-            end_dt: datetime,
+            profile_url: str,
             max_posts: int = 50,
-    ) -> list[str]:
-        """프로필 페이지 스크롤하며 게시물 shortcode 수집"""
-        shortcodes: list[str] = []
+            max_scroll_attempts: int = 10,
+    ) -> list[dict]:
+        """프로필 페이지 이동 전에 리스너를 등록하고, 첫 로드 + 스크롤 중 GraphQL 응답 수집"""
+        nodes: list[dict] = []
+        seen_ids: set[str] = set()  # pk와 code 모두 추적
         last_height = 0
         scroll_attempts = 0
-        max_scroll_attempts = 10
 
-        while len(shortcodes) < max_posts and scroll_attempts < max_scroll_attempts:
-            # 게시물 링크 수집
-            links = await page.locator('a[href*="/p/"]').all()
+        async def on_response(response) -> None:
+            if "graphql/query" not in response.url or response.status != 200:
+                return
+            try:
+                body = await response.json()
+                timeline = (
+                    body.get("data", {})
+                    .get("xdt_api__v1__feed__user_timeline_graphql_connection", {})
+                )
+                if not timeline:
+                    return
+                for edge in timeline.get("edges", []):
+                    node = edge.get("node", {})
+                    pk = str(node.get("pk", ""))
+                    code = node.get("code", "")
+                    # pk 또는 code 중 하나라도 이미 수집한 경우 스킵
+                    if (pk and pk in seen_ids) or (code and code in seen_ids):
+                        continue
+                    if pk:
+                        seen_ids.add(pk)
+                    if code:
+                        seen_ids.add(code)
+                    nodes.append(node)
+            except Exception:
+                pass
 
-            for link in links:
-                href = await link.get_attribute("href")
-                if href and "/p/" in href:
-                    # /p/ABC123/ 에서 ABC123 추출
-                    match = re.search(r"/p/([^/]+)/", href)
-                    if match:
-                        code = match.group(1)
-                        if code not in shortcodes:
-                            shortcodes.append(code)
+        # goto 전에 리스너 등록 → 첫 페이지 로드의 GraphQL 응답도 캡처
+        page.on("response", on_response)
 
-            # 스크롤
-            current_height = await page.evaluate("document.body.scrollHeight")
-            if current_height == last_height:
-                scroll_attempts += 1
-            else:
-                scroll_attempts = 0
+        try:
+            await page.goto(profile_url, wait_until="networkidle", timeout=30000)
+            await self._random_delay(10, 15)
 
-            last_height = current_height
-            await page.evaluate("window.scrollBy(0, window.innerHeight)")
-            await self._random_delay(1.5, 3)
+            while len(nodes) < max_posts and scroll_attempts < max_scroll_attempts:
+                # 페이지 높이 변화 감지 (종료 조건 판단)
+                current_height = await page.evaluate("document.body.scrollHeight")
+                if current_height == last_height:
+                    scroll_attempts += 1
+                else:
+                    scroll_attempts = 0
+                last_height = current_height
 
-        return shortcodes[:max_posts]
+                # 뷰포트의 60~100% 범위를 4~8 단계로 나눠 스크롤 (사람 패턴 모사)
+                viewport_height = await page.evaluate("window.innerHeight")
+                scroll_target = int(viewport_height * random.uniform(0.6, 1.0))
+                steps = random.randint(4, 8)
+                step_size = scroll_target // steps
+                for _ in range(steps):
+                    jitter = random.randint(-10, 10)
+                    await page.evaluate(f"window.scrollBy(0, {step_size + jitter})")
+                    await asyncio.sleep(random.uniform(0.05, 0.18))
+
+                await self._random_delay(1.5, 3)
+        finally:
+            page.remove_listener("response", on_response)
+
+        return nodes[:max_posts]
 
     def crawl_official_account(
             self,
@@ -347,27 +379,20 @@ class InstagramCrawler(BaseCrawler):
                     logger.error("instagram login failed, cannot crawl")
                     return posts
 
-            # 프로필 페이지로 이동
-            profile_url = f"{self.BASE_URL}/{handle}/"
-            await page.goto(profile_url, wait_until="networkidle", timeout=30000) # 30초
-            await self._random_delay(10, 15)
+            logger.info("instagram crawl started for @%s", handle)
 
-            # 프로필 존재 확인
+            # 리스너 등록 → 첫 로드 + 스크롤 중 GraphQL 응답을 모두 캡처
+            profile_url = f"{self.BASE_URL}/{handle}/"
+            nodes = await self._scroll_and_intercept_graphql(page, profile_url, max_posts=50)
+
+            # 프로필 존재 확인 (goto 이후 현재 URL/콘텐츠 기준)
             if "페이지를 찾을 수 없습니다" in await page.content():
                 logger.warning("instagram profile not found: %s", handle)
                 return posts
+            logger.info("found %d posts via graphql", len(nodes))
 
-            logger.info("instagram crawl started for @%s", handle)
-
-            # 게시물 shortcode 수집
-            shortcodes = await self._scroll_and_collect_posts(page, start_dt, end_dt)
-            logger.info("found %d posts to process", len(shortcodes))
-
-            # 각 게시물 상세 정보 수집
-            for shortcode in shortcodes:
-                await self._random_delay(5, 8)
-
-                post_data = await self._parse_post_data(page, shortcode)
+            for node in nodes:
+                post_data = self._node_to_post_data(node)
                 if not post_data:
                     continue
 
@@ -401,6 +426,7 @@ class InstagramCrawler(BaseCrawler):
                     )
                 )
 
+            logger.info(posts)
             return posts
 
         except Exception as e:
@@ -454,21 +480,12 @@ class InstagramCrawler(BaseCrawler):
                     continue
 
                 try:
-                    # 해시태그 페이지로 이동
+                    # 리스너 등록 → 첫 로드 + 스크롤 중 GraphQL 응답을 모두 캡처
                     tag_url = f"{self.BASE_URL}/explore/tags/{tag}/"
-                    await page.goto(tag_url, wait_until="networkidle")
-                    await self._random_delay(2, 4)
+                    nodes = await self._scroll_and_intercept_graphql(page, tag_url, max_posts=20)
 
-                    # 게시물 수집
-                    shortcodes = await self._scroll_and_collect_posts(
-                        page, start_dt, end_dt, max_posts=20
-                    )
-
-
-                    for shortcode in shortcodes:
-                        await self._random_delay(3, 6)
-
-                        post_data = await self._parse_post_data(page, shortcode)
+                    for node in nodes:
+                        post_data = self._node_to_post_data(node)
                         if not post_data:
                             continue
 
