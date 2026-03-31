@@ -211,6 +211,7 @@ class InstagramCrawler(BaseCrawler):
             print("_check_login_status : " + e.__class__.__name__, e)
             return False
 
+    @staticmethod
     def _node_to_post_data(node: dict) -> InstagramPageData | None:
         """GraphQL 응답 노드에서 게시물 데이터 추출"""
         try:
