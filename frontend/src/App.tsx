@@ -1,6 +1,5 @@
 import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { Box, Typography, List, ListItemButton, ListItemText, Divider } from '@mui/material'
-import PostListPage from './pages/PostListPage'
 import DashboardPage from './pages/DashboardPage'
 import CrawlingStatusPage from './pages/CrawlingStatusPage'
 
@@ -12,7 +11,6 @@ const NAV_GROUPS = [
     items: [
       { label: '계정 리스트', path: '/accounts' },
       { label: '크롤링 현황', path: '/crawling' },
-      { label: '크롤링 현황(더미)', path: '/dummy' },
     ],
   },
 ]
@@ -135,7 +133,6 @@ export default function App() {
         <Box component="main" sx={{ flex: 1, p: 3, overflow: 'auto' }}>
           <Routes>
             <Route path="/" element={<Navigate to="/accounts" replace />} />
-            <Route path="/dummy" element={<PostListPage />} />
             <Route path="/accounts" element={<DashboardPage />} />
             <Route path="/crawling" element={<CrawlingStatusPage />} />
           </Routes>

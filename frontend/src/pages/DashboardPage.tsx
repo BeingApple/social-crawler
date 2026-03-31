@@ -1,32 +1,39 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Typography, Paper, Grid, TextField, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import type { SelectChangeEvent } from '@mui/material'
 import DataTable from '../components/dashboard/DataTable'
-import { SAMPLE_ACCOUNTS } from '../data/sampleData'
-import type { AccountFilters } from '../types/brand'
+import { fetchAssignees } from '../api/assignees'
+import type { BrandAssignee, AssigneeFilters } from '../types/brand'
+import { PLATFORM_OPTIONS } from '../constants/platform'
 
-const INITIAL_FILTERS: AccountFilters = {
-  managerName: '',
+const INITIAL_FILTERS: AssigneeFilters = {
+  assigneeName: '',
   brandName: '',
-  socialMedia: '',
+  platformId: '',
   accountId: '',
   accountType: '',
-  status: 'ALL',
+  active: 'ALL',
 }
 
-const SOCIAL_MEDIA_OPTIONS = ['인스타그램', '유튜브', '틱톡', '페이스북']
 const ACCOUNT_TYPE_OPTIONS = ['KR', 'HQ']
 
 export default function DashboardPage() {
-  const accounts = SAMPLE_ACCOUNTS
-  const [filters, setFilters] = useState<AccountFilters>(INITIAL_FILTERS)
+  const [assignees, setAssignees] = useState<BrandAssignee[]>([])
+  const [filters, setFilters]     = useState<AssigneeFilters>(INITIAL_FILTERS)
+  const [error, setError]         = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchAssignees()
+      .then(setAssignees)
+      .catch(() => setError('계정 목록을 불러오지 못했습니다.'))
+  }, [])
 
   const handleText =
-    (field: keyof AccountFilters) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    (field: keyof AssigneeFilters) => (e: React.ChangeEvent<HTMLInputElement>) =>
       setFilters((prev) => ({ ...prev, [field]: e.target.value }))
 
   const handleSelect =
-    (field: keyof AccountFilters) => (e: SelectChangeEvent<string>) =>
+    (field: keyof AssigneeFilters) => (e: SelectChangeEvent<string>) =>
       setFilters((prev) => ({ ...prev, [field]: e.target.value }))
 
   return (
@@ -35,11 +42,13 @@ export default function DashboardPage() {
         계정 리스트
       </Typography>
 
+      {error && <Typography color="error" mb={2}>{error}</Typography>}
+
       {/* 필터 영역 */}
       <Paper elevation={1} sx={{ p: 2.5, mb: 3 }}>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <TextField size="small" fullWidth label="담당자명" value={filters.managerName} onChange={handleText('managerName')} />
+            <TextField size="small" fullWidth label="담당자명" value={filters.assigneeName} onChange={handleText('assigneeName')} />
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
             <TextField size="small" fullWidth label="브랜드명" value={filters.brandName} onChange={handleText('brandName')} />
@@ -47,9 +56,11 @@ export default function DashboardPage() {
           <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>소셜 미디어</InputLabel>
-              <Select value={filters.socialMedia} label="소셜 미디어" onChange={handleSelect('socialMedia')}>
+              <Select value={filters.platformId} label="소셜 미디어" onChange={handleSelect('platformId')}>
                 <MenuItem value="">전체</MenuItem>
-                {SOCIAL_MEDIA_OPTIONS.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                {PLATFORM_OPTIONS.map(({ value, label }) => (
+                  <MenuItem key={value} value={value}>{label}</MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Grid>
@@ -68,7 +79,7 @@ export default function DashboardPage() {
           <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>활성화 상태</InputLabel>
-              <Select value={filters.status} label="활성화 상태" onChange={handleSelect('status')}>
+              <Select value={filters.active} label="활성화 상태" onChange={handleSelect('active')}>
                 <MenuItem value="ALL">전체</MenuItem>
                 <MenuItem value="ON">ON</MenuItem>
                 <MenuItem value="OFF">OFF</MenuItem>
@@ -79,7 +90,7 @@ export default function DashboardPage() {
       </Paper>
 
       {/* 테이블 */}
-      <DataTable accounts={accounts} filters={filters} />
+      <DataTable assignees={assignees} filters={filters} />
     </>
   )
 }

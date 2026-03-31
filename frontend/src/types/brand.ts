@@ -1,17 +1,19 @@
-export interface BrandAccount {
-  managerName: string
-  brandName: string
-  socialMedia: string
+export interface BrandAssignee {
+  assigneeId: number
+  brandId: number
+  brandName: string | null
+  platformId: string
+  assigneeName: string
   accountId: string
   accountType: string
-  status: 'ON' | 'OFF'
+  active: boolean
 }
 
-export interface AccountFilters {
-  managerName: string
+export interface AssigneeFilters {
+  assigneeName: string
   brandName: string
-  socialMedia: string   // '' = ALL
+  platformId: string   // '' = ALL
   accountId: string
-  accountType: string   // '' = ALL
-  status: 'ALL' | 'ON' | 'OFF'
+  accountType: string  // '' = ALL
+  active: 'ALL' | 'ON' | 'OFF'
 }

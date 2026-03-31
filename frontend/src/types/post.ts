@@ -1,15 +1,28 @@
-export interface Post {
-  postId: number
-  brandId: number
-  platform: string
-  externalPostId: string
-  content: string | null
-  hashtags: string[] | null
-  likes: number
-  comments: number
-  views: number
-  postedAt: string | null
-  crawledAt: string
+export interface SocialPostCrawl {
+  spcId: number
+  platformId: string
+  crawlCase: string
+  brandName: string
+  accountId: string
+  accountType: string
+  postId: string
+  postUrl: string
+  postType: string | null
+  postedAt: string
+  postTitle: string | null
+  textContent: string | null
+  personTags: string | null
+  hashtags: string | null
+  mediaUrl: string | null
+  viewCount: number | null
+  likeCount: number | null
+  commentCount: number | null
+  shareCount: number | null
+  authorName: string | null
+  authorFollowers: number | null
+  duplicate: boolean
+  junk: boolean
+  createdAt: string
 }
 
 export interface PageResponse<T> {
@@ -21,7 +34,12 @@ export interface PageResponse<T> {
 }
 
 export interface FetchPostsParams {
-  platform?: string
+  platformId?: string
+  brandName?: string
+  crawlCase?: string
+  accountType?: string
+  postedFrom?: string   // ISO date (YYYY-MM-DD)
+  postedTo?: string     // ISO date (YYYY-MM-DD)
   page?: number
   size?: number
 }

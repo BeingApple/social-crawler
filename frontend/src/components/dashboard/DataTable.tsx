@@ -1,50 +1,62 @@
 import { Box, Card, CardContent } from '@mui/material'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
-import type { BrandAccount, AccountFilters } from '../../types/brand'
+import type { BrandAssignee, AssigneeFilters } from '../../types/brand'
+import { PLATFORM_LABELS } from '../../constants/platform'
 
 interface Props {
-  accounts: BrandAccount[]
-  filters: AccountFilters
+  assignees: BrandAssignee[]
+  filters: AssigneeFilters
 }
 
 const STATUS_CHIP_COLOR: Record<string, string> = { ON: '#2e7d32', OFF: '#d32f2f' }
 
 const columns: GridColDef[] = [
-  { field: 'accountId',   headerName: '계정 아이디',  width: 160 },
-  { field: 'brandName',   headerName: '브랜드명',      width: 120 },
-  { field: 'socialMedia', headerName: '소셜 미디어',   width: 130 },
-  { field: 'accountType', headerName: '계정 구분',     width: 100 },
-  { field: 'managerName', headerName: '담당자명',      width: 110 },
+  { field: 'accountId',    headerName: '계정 아이디',  width: 160 },
+  { field: 'brandName',    headerName: '브랜드명',      width: 120 },
   {
-    field: 'status',
+    field: 'platformId',
+    headerName: '소셜 미디어',
+    width: 130,
+    valueFormatter: (value: string) => PLATFORM_LABELS[value] ?? value,
+  },
+  { field: 'accountType',  headerName: '계정 구분',     width: 100 },
+  { field: 'assigneeName', headerName: '담당자명',      width: 110 },
+  {
+    field: 'active',
     headerName: '활성화 상태',
     width: 110,
-    renderCell: ({ value }) => (
-      <Box
-        component="span"
-        sx={{
-          px: 1.5, py: 0.4, borderRadius: 2, fontSize: 12, fontWeight: 700,
-          color: '#fff', bgcolor: STATUS_CHIP_COLOR[value as string] ?? '#757575',
-        }}
-      >
-        {value}
-      </Box>
-    ),
+    renderCell: ({ value }) => {
+      const label = value ? 'ON' : 'OFF'
+      return (
+        <Box
+          component="span"
+          sx={{
+            px: 1.5, py: 0.4, borderRadius: 2, fontSize: 12, fontWeight: 700,
+            color: '#fff', bgcolor: STATUS_CHIP_COLOR[label] ?? '#757575',
+          }}
+        >
+          {label}
+        </Box>
+      )
+    },
   },
 ]
 
-export default function DataTable({ accounts, filters }: Props) {
-  const rows = accounts
+export default function DataTable({ assignees, filters }: Props) {
+  const rows = assignees
     .filter((a) => {
-      if (filters.managerName && !a.managerName.toLowerCase().includes(filters.managerName.toLowerCase())) return false
-      if (filters.brandName && !a.brandName.toLowerCase().includes(filters.brandName.toLowerCase())) return false
-      if (filters.socialMedia && a.socialMedia !== filters.socialMedia) return false
+      if (filters.assigneeName && !a.assigneeName.toLowerCase().includes(filters.assigneeName.toLowerCase())) return false
+      if (filters.brandName && !(a.brandName ?? '').toLowerCase().includes(filters.brandName.toLowerCase())) return false
+      if (filters.platformId && a.platformId !== filters.platformId) return false
       if (filters.accountId && !a.accountId.toLowerCase().includes(filters.accountId.toLowerCase())) return false
       if (filters.accountType && a.accountType !== filters.accountType) return false
-      if (filters.status !== 'ALL' && a.status !== filters.status) return false
+      if (filters.active !== 'ALL') {
+        const isActive = filters.active === 'ON'
+        if (a.active !== isActive) return false
+      }
       return true
     })
-    .map((a, i) => ({ id: i, ...a }))
+    .map((a) => ({ id: a.assigneeId, ...a }))
 
   return (
     <Card elevation={2}>
