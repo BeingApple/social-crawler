@@ -25,6 +25,8 @@ class SocialPost:
     comments: int = 0
     shares: int = 0
     views: int = 0
+    follower_count: int = 0
+    image_url: str | None = None
     posted_at: datetime | None = None
     crawled_at: datetime | None = None
     matched_keywords: list[str] = field(default_factory=list)

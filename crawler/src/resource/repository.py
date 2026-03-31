@@ -8,7 +8,6 @@ class BrandRepository:
         self.conn = conn
 
     def list_active_targets(self) -> list[BrandTarget]:
-        '''
         sql = """
               SELECT
                   id, brand_name,
@@ -16,17 +15,6 @@ class BrandRepository:
                   search_keywords, junk_keywords
               FROM brands
               WHERE is_active = 1 \
-              """
-        '''
-        sql = """
-              SELECT
-                  1 as id
-                    ,'2' as  brand_name
-                    ,'musinsa.official' as instagram_handle
-                    ,'4' as tiktok_username
-                    ,'5' as twitter_handle
-                    ,'6' as search_keywords
-                    ,'7' as junk_keywords
               """
         with self.conn.cursor(DictCursor) as cur:
             cur.execute(sql)
@@ -52,6 +40,7 @@ class BrandRepository:
                 id=12391,
                 brand_name='bbbb',
                 instagram_handle='instagram',
+                #instagram_handle='musinsa.offcial',
                 tiktok_username='dddd',
                 twitter_handle='eeeee',
                 search_keywords='ffff' or [],

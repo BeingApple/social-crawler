@@ -51,6 +51,7 @@ def main() -> None:
     '''
 
 def run_all():
+    conn = None
     try:
         conn = get_connection()
 
@@ -63,7 +64,7 @@ def run_all():
 
         service.run()
     finally:
-        #conn.close()
+        conn.close()
         print("close connection")
 
 

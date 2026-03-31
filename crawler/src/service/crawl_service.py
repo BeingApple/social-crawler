@@ -47,7 +47,7 @@ class CrawlService:
                 if platform == "twitter" and not handle:
                     continue
 
-                #job_id = self.job_repo.start(target.id, platform) #hsgtest
+                #job_id = self.job_repo.start(target.id, platform) #test
                 #self.monitoring.log_start(target.brand_name, platform)
 
                 try:
@@ -69,11 +69,11 @@ class CrawlService:
                     for post in filtered_posts:
                         if self.post_repo.exists(post.platform, post.external_post_id):
                             continue
-                        #self.post_repo.save(post) # hsgtest save
+                        #self.post_repo.save(post) # test save
                         saved_posts.append(post)
                     '''
 
-                    # self.post_repo.commit() #hsgtest
+                    # self.post_repo.commit() #test
 
                     #total_found += len(filtered_posts)
                     #total_saved += len(saved_posts)

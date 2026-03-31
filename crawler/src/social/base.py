@@ -41,7 +41,8 @@ class BaseCrawler(ABC):
         if handle:
             results.extend(self.crawl_official_account(brand_id, handle, search_keywords, start_dt, end_dt))
 
-        #results.extend(self.crawl_search(brand_id, search_keywords, start_dt, end_dt)) # TODO : 검색어 추후 확인
+        # TODO : 검색어 추후 확인
+        #results.extend(self.crawl_search(brand_id, search_keywords, start_dt, end_dt))
 
         deduped: dict[str, SocialPost] = {}
         for post in results:

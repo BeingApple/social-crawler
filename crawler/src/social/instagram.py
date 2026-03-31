@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 class InstagramPageData:
     post_id: str
     url: str
+    image_url: str
     content: str
     likes: int = 0
     comments: int = 0
@@ -210,13 +211,18 @@ class InstagramCrawler(BaseCrawler):
             print("_check_login_status : " + e.__class__.__name__, e)
             return False
 
-    @staticmethod
     def _node_to_post_data(node: dict) -> InstagramPageData | None:
         """GraphQL 응답 노드에서 게시물 데이터 추출"""
         try:
             shortcode = node.get("code", "")
             if not shortcode:
                 return None
+
+            # 이미지 있을 경우 첫번째 이미지
+            image_url = (node.get("image_versions2", {})
+                        .get("candidates", [{}])[0]
+                        .get("url", "")
+            )
 
             caption = node.get("caption") or {}
             content = caption.get("text", "") if isinstance(caption, dict) else ""
@@ -230,6 +236,7 @@ class InstagramCrawler(BaseCrawler):
                 post_id=shortcode,
                 url=f"https://www.instagram.com/p/{shortcode}/",
                 content=content,
+                image_url=image_url,
                 likes=node.get("like_count", 0),
                 comments=node.get("comment_count", 0),
                 views=views,
@@ -238,26 +245,6 @@ class InstagramCrawler(BaseCrawler):
         except Exception as e:
             logger.warning("failed to parse graphql node: %s", e)
             return None
-
-    @staticmethod
-    def _parse_count(text: str) -> int:
-        """'1.2만', '1,234', '1.5K' 형식을 숫자로 변환"""
-        text = text.strip().replace(",", "").replace(" ", "")
-
-        multipliers = {"k": 1000, "K": 1000, "만": 10000, "m": 1000000, "M": 1000000}
-
-        for suffix, mult in multipliers.items():
-            if suffix in text:
-                try:
-                    num = float(re.sub(r"[^\d.]", "", text.replace(suffix, "")))
-                    return int(num * mult)
-                except ValueError:
-                    return 0
-
-        try:
-            return int(re.sub(r"[^\d]", "", text))
-        except ValueError:
-            return 0
 
     @staticmethod
     async def _random_delay(min_sec: float = 1.0, max_sec: float = 3.0) -> None:
@@ -358,13 +345,6 @@ class InstagramCrawler(BaseCrawler):
                 brand_id, handle, search_keywords, start_dt, end_dt
             )
         )
-        '''
-        return asyncio.get_event_loop().run_until_complete(
-            self._crawl_official_account_async(
-                brand_id, handle, search_keywords, start_dt, end_dt
-            )
-        )
-        '''
 
     async def _crawl_official_account_async(
             self,
@@ -399,6 +379,7 @@ class InstagramCrawler(BaseCrawler):
             if "페이지를 찾을 수 없습니다" in await page.content():
                 logger.warning("instagram profile not found: %s", handle)
                 return posts
+
             logger.info("found %d posts via graphql", len(nodes))
 
             for node in nodes:
@@ -422,7 +403,9 @@ class InstagramCrawler(BaseCrawler):
                         brand_id=brand_id,
                         platform=self.platform,
                         external_post_id=post_data.post_id,
+                        follower_count=follower_count,
                         post_url=post_data.url,
+                        image_url=post_data.image_url,
                         content=post_data.content,
                         likes=post_data.likes,
                         comments=post_data.comments,
@@ -435,7 +418,7 @@ class InstagramCrawler(BaseCrawler):
                         ],
                     )
                 )
-
+            logger.info("########### posts : ")
             logger.info(posts)
             return posts
 
@@ -510,7 +493,9 @@ class InstagramCrawler(BaseCrawler):
                                 brand_id=brand_id,
                                 platform=self.platform,
                                 external_post_id=post_data.post_id,
+                                follower_count=0, #follower_count,
                                 post_url=post_data.url,
+                                image_url=post_data.image_url,
                                 content=post_data.content,
                                 likes=post_data.likes,
                                 comments=post_data.comments,
