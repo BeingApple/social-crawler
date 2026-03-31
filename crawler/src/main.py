@@ -36,7 +36,8 @@ def main() -> None:
     logger.info("Crawler started. Interval=%ds", INTERVAL)
 
     # 시작 즉시 1회 실행
-    run_all_test()
+    #run_all_test()
+    run_all()
 
     # 이후 주기 실행
     #schedule.every(INTERVAL).seconds.do(run_all_test)
@@ -55,7 +56,7 @@ def run_all():
             account_repo=SocialCrawlAccountRepository(session),
             post_repo=SocialPostCrawlRepository(session),
             keyword_repo=SocialCrawlExcludeKeywordRepository(session),
-            notifier=SlackNotifier(os.environ["SLACK_WEBHOOK_URL"]),
+            notifier=SlackNotifier(None), #notifier=SlackNotifier(os.environ["SLACK_WEBHOOK_URL"]),
         )
         service.run()
     finally:

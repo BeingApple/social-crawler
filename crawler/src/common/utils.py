@@ -12,11 +12,11 @@ USER_AGENTS = [
 def yesterday_range() -> tuple[datetime, datetime]:
     now = datetime.now(ZoneInfo("Asia/Seoul"))
     yesterday = now - timedelta(days=1)
-    #start = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
 
     testDay = now - timedelta(days=10)
     start = testDay.replace(hour=0, minute=0, second=0, microsecond=0)
 
+    #start = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
     end = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
     return start, end
 

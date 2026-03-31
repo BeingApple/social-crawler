@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import random
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 class InstagramPageData:
     post_id: str
     url: str
-    image_url: str
+    media_url: str
     content: str
     likes: int = 0
     comments: int = 0
@@ -45,7 +44,7 @@ class InstagramCrawler(BaseCrawler):
             self,
             proxy: dict[str, str] | None = None,
             user_agent: str | None = None,
-            headless: bool = True,
+            headless: bool = False,
     ) -> None:
         self._proxy = proxy
         self._user_agent = user_agent or random_user_agent()
@@ -222,11 +221,17 @@ class InstagramCrawler(BaseCrawler):
             if not shortcode:
                 return None
 
-            # 이미지 있을 경우 첫번째 이미지
-            image_url = (node.get("image_versions2", {})
-                        .get("candidates", [{}])[0]
-                        .get("url", "")
-            )
+            # 비디오 URL 우선, 없으면 이미지 URL
+            video_versions = node.get("video_versions") or []
+            media_url = video_versions[0].get("url", "") if video_versions else ""
+
+            if not media_url:
+                # 비디오가 없으면 이미지 URL 사용
+                media_url = (
+                    node.get("image_versions2", {})
+                    .get("candidates", [{}])[0]
+                    .get("url", "")
+                )
 
             caption = node.get("caption") or {}
             content = caption.get("text", "") if isinstance(caption, dict) else ""
@@ -239,11 +244,14 @@ class InstagramCrawler(BaseCrawler):
             mentions = re.findall(r'@\w.+', content)
             hashtags = re.findall(r'#\w.+', content)
 
+            #comment_count = node.get("comment_count", 0)
+            #like_count = node.get("like_count", 0)
+
             return InstagramPageData(
                 post_id=shortcode,
                 url=f"https://www.instagram.com/p/{shortcode}/",
                 content=content,
-                image_url=image_url,
+                media_url=media_url,
                 mentions=mentions,
                 hashtags=hashtags,
                 likes=node.get("like_count", 0),
@@ -420,7 +428,7 @@ class InstagramCrawler(BaseCrawler):
                         post_url=post_data.url,
                         posted_at=post_data.posted_at,
                         text_content=post_data.content,
-                        media_url=post_data.image_url,
+                        media_url=post_data.media_url,
                         like_count=post_data.likes,
                         comment_count=post_data.comments,
                         view_count=post_data.views,
@@ -518,7 +526,7 @@ class InstagramCrawler(BaseCrawler):
                                 post_url=post_data.url,
                                 posted_at=post_data.posted_at,
                                 text_content=post_data.content,
-                                media_url=post_data.image_url,
+                                media_url=post_data.media_url,
                                 like_count=post_data.likes,
                                 comment_count=post_data.comments,
                                 view_count=post_data.views,

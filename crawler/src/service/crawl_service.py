@@ -32,7 +32,8 @@ class CrawlService:
 
     def run(self) -> dict:
         start_dt, end_dt = yesterday_range()
-        targets = self._get_test_targets()  # TODO: DB 기반 브랜드 설정 테이블로 교체
+
+
 
         total_found = 0
         total_saved = 0
@@ -43,9 +44,16 @@ class CrawlService:
             #"twitter": self.twitter,
         }
 
-        for target in targets:
-            for platform, crawler in crawler_map.items():
+        for platform, crawler in crawler_map.items():
+
+            targets = self.account_repo.list_active(platform)
+            #targets = self._get_test_targets()  #Test
+
+            for target in targets:
                 handle = getattr(target, f"{platform}_handle", None)
+
+                print(f"platform: {platform}, handle: {handle}")
+
                 if not handle:
                     continue
 
@@ -97,7 +105,6 @@ class CrawlService:
                     print(e)
                     #self.post_repo.session.rollback()
                     #self.monitoring.log_error(target.brand_name, platform, e)
-
         return {
             "status": "ok",
             "found": total_found,

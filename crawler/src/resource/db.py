@@ -3,6 +3,20 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+from pathlib import Path
+from dotenv import load_dotenv
+
+# .env 파일 로드 (crawler/.env 또는 프로젝트 루트 .env)
+_BASE_DIR = Path(__file__).resolve().parent.parent  # crawler/
+_ENV_FILE = _BASE_DIR / ".env"
+if _ENV_FILE.exists():
+    load_dotenv(_ENV_FILE)
+else:
+    # 프로젝트 루트 .env 시도
+    _ROOT_ENV = _BASE_DIR.parent / ".env"
+    if _ROOT_ENV.exists():
+        load_dotenv(_ROOT_ENV)
+
 _DB_URL = (
     "mysql+pymysql://{user}:{password}@{host}:{port}/{db}?charset=utf8mb4"
 ).format(
