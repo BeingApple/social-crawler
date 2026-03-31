@@ -14,7 +14,7 @@ def yesterday_range() -> tuple[datetime, datetime]:
     yesterday = now - timedelta(days=1)
     #start = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    testDay = now - timedelta(days=15)
+    testDay = now - timedelta(days=10)
     start = testDay.replace(hour=0, minute=0, second=0, microsecond=0)
 
     end = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
@@ -43,6 +43,7 @@ def rotate_session(self, proxy: dict[str, str] | None = None) -> None:
     if proxy:
         self.loader.context.proxy = proxy
 
+'''
 def _parse_count(text: str) -> int:
     """'1.2만', '1,234', '1.5K' 형식을 숫자로 변환"""
     text = text.strip().replace(",", "").replace(" ", "")
@@ -61,3 +62,4 @@ def _parse_count(text: str) -> int:
         return int(re.sub(r"[^\d]", "", text))
     except ValueError:
         return 0
+'''
