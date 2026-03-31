@@ -334,7 +334,7 @@ class InstagramCrawler(BaseCrawler):
 
     def crawl_official_account(
             self,
-            brand_id: int,
+            brand_name: str,
             handle: str,
             account_type: str,
             search_keywords: list[str],
@@ -344,13 +344,13 @@ class InstagramCrawler(BaseCrawler):
         """공식 계정 크롤링 (동기 래퍼)"""
         return asyncio.run(
             self._crawl_official_account_async(
-                brand_id, handle, account_type, search_keywords, start_dt, end_dt
+                brand_name, handle, account_type, search_keywords, start_dt, end_dt
             )
         )
 
     async def _crawl_official_account_async(
             self,
-            brand_id: int,
+            brand_name: str,
             handle: str,
             account_type: str,
             search_keywords: list[str],
@@ -403,9 +403,9 @@ class InstagramCrawler(BaseCrawler):
 
                 posts.append(
                     SocialPost(
-                        platform=self.platform,
+                        platform_id=self.platform,
                         crawl_case="CASE1",
-                        brand_id=brand_id,
+                        brand_name=brand_name,
                         account_id=handle,
                         account_type=account_type,
                         post_id=post_data.post_id,
@@ -440,7 +440,7 @@ class InstagramCrawler(BaseCrawler):
 
     def crawl_search(
             self,
-            brand_id: int,
+            brand_name: str,
             account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
@@ -451,13 +451,13 @@ class InstagramCrawler(BaseCrawler):
         return []
         '''
         return asyncio.get_event_loop().run_until_complete(
-            self._crawl_search_async(brand_id, account_type, search_keywords, start_dt, end_dt)
+            self._crawl_search_async(brand_name, account_type, search_keywords, start_dt, end_dt)
         )
         '''
 
     async def _crawl_search_async(
             self,
-            brand_id: int,
+            brand_name: str,
             account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
@@ -498,9 +498,9 @@ class InstagramCrawler(BaseCrawler):
 
                         posts.append(
                             SocialPost(
-                                platform=self.platform,
+                                platform_id=self.platform,
                                 crawl_case="CASE2",
-                                brand_id=brand_id,
+                                brand_name=brand_name,
                                 account_id=tag,
                                 account_type=account_type,
                                 post_id=post_data.post_id,

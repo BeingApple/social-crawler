@@ -10,7 +10,7 @@ class BaseCrawler(ABC):
     @abstractmethod
     def crawl_official_account(
             self,
-            brand_id: int,
+            brand_name: str,
             handle: str,
             account_type: str,
             search_keywords: list[str],
@@ -22,7 +22,7 @@ class BaseCrawler(ABC):
     @abstractmethod
     def crawl_search(
             self,
-            brand_id: int,
+            brand_name: str,
             account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
@@ -32,7 +32,7 @@ class BaseCrawler(ABC):
 
     def crawl(
             self,
-            brand_id: int,
+            brand_name: str,
             handle: str | None,
             account_type: str,
             search_keywords: list[str],
@@ -42,10 +42,10 @@ class BaseCrawler(ABC):
         results: list[SocialPost] = []
 
         if handle:
-            results.extend(self.crawl_official_account(brand_id, handle, account_type, search_keywords, start_dt, end_dt))
+            results.extend(self.crawl_official_account(brand_name, handle, account_type, search_keywords, start_dt, end_dt))
 
         # TODO : 검색어 추후 확인
-        #results.extend(self.crawl_search(brand_id, account_type, search_keywords, start_dt, end_dt))
+        #results.extend(self.crawl_search(brand_name, account_type, search_keywords, start_dt, end_dt))
 
         deduped: dict[str, SocialPost] = {}
         for post in results:

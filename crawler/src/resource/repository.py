@@ -13,17 +13,17 @@ class SocialCrawlAccountRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def list_active(self, platform: str | None = None) -> list[CrawlAccount]:
+    def list_active(self, platform_id: str | None = None) -> list[CrawlAccount]:
         stmt = select(SocialCrawlAccount).where(SocialCrawlAccount.status == "ACTIVE")
-        if platform:
-            stmt = stmt.where(SocialCrawlAccount.platform == platform)
+        if platform_id:
+            stmt = stmt.where(SocialCrawlAccount.platform_id == platform_id)
 
         rows = self.session.execute(stmt).scalars().all()
         return [
             CrawlAccount(
                 account_id=row.account_id,
                 name=row.name,
-                platform=row.platform,
+                platform_id=row.platform_id,
                 login_id=row.login_id,
                 login_pw=row.login_pw,
                 status=row.status,
@@ -38,19 +38,19 @@ class SocialPostCrawlRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def exists(self, platform: str, post_id: str) -> bool:
+    def exists(self, platform_id: str, post_id: str) -> bool:
         stmt = (
-            select(SocialPostCrawl.crawl_id)
-            .where(SocialPostCrawl.platform == platform, SocialPostCrawl.post_id == post_id)
+            select(SocialPostCrawl.spc_id)
+            .where(SocialPostCrawl.platform_id == platform_id, SocialPostCrawl.post_id == post_id)
             .limit(1)
         )
         return self.session.execute(stmt).scalar() is not None
 
     def save(self, post: SocialPost) -> None:
         values = dict(
-            platform=post.platform,
+            platform_id=post.platform_id,
             crawl_case=post.crawl_case,
-            brand_id=post.brand_id,
+            brand_name=post.brand_name,
             account_id=post.account_id,
             account_type=post.account_type,
             post_id=post.post_id,
@@ -102,19 +102,17 @@ class SocialCrawlExcludeKeywordRepository:
 
     def list_junk_keywords(
         self,
-        platform: str | None = None,
+        platform_id: str | None = None,
         brand_id: int | None = None,
     ) -> list[str]:
-        """정크 키워드 목록 반환 (junk_keyword IS NOT NULL 행)."""
+        """정크 키워드 목록 반환 (keyword_type=JUNK)."""
         stmt = (
             select(SocialCrawlExcludeKeyword.junk_keyword)
             .where(
                 SocialCrawlExcludeKeyword.is_active == 1,
+                SocialCrawlExcludeKeyword.keyword_type == "JUNK",
                 SocialCrawlExcludeKeyword.junk_keyword.is_not(None),
-                or_(
-                    SocialCrawlExcludeKeyword.platform.is_(None),
-                    SocialCrawlExcludeKeyword.platform == platform,
-                ),
+                SocialCrawlExcludeKeyword.platform_id == platform_id,
                 or_(
                     SocialCrawlExcludeKeyword.brand_id.is_(None),
                     SocialCrawlExcludeKeyword.brand_id == brand_id,
@@ -125,19 +123,17 @@ class SocialCrawlExcludeKeywordRepository:
 
     def list_filter_keywords(
         self,
-        platform: str | None = None,
+        platform_id: str | None = None,
         brand_id: int | None = None,
     ) -> list[str]:
-        """CASE2 수집 필터 키워드 목록 반환 (filter_keyword IS NOT NULL 행)."""
+        """CASE2 수집 필터 키워드 목록 반환 (keyword_type=CASE2_FILTER)."""
         stmt = (
             select(SocialCrawlExcludeKeyword.filter_keyword)
             .where(
                 SocialCrawlExcludeKeyword.is_active == 1,
+                SocialCrawlExcludeKeyword.keyword_type == "CASE2_FILTER",
                 SocialCrawlExcludeKeyword.filter_keyword.is_not(None),
-                or_(
-                    SocialCrawlExcludeKeyword.platform.is_(None),
-                    SocialCrawlExcludeKeyword.platform == platform,
-                ),
+                SocialCrawlExcludeKeyword.platform_id == platform_id,
                 or_(
                     SocialCrawlExcludeKeyword.brand_id.is_(None),
                     SocialCrawlExcludeKeyword.brand_id == brand_id,

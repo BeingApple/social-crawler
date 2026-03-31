@@ -13,21 +13,25 @@ class SummaryService:
     def summarize(self, brand_name: str, posts: list[SocialPost]) -> dict:
         grouped = defaultdict(list)
         for post in posts:
-            grouped[post.platform].append(post)
+            grouped[post.platform_id].append(post)
 
         platform_summaries = []
-        for platform, items in grouped.items():
-            top_items = sorted(items, key=lambda p: (p.likes + p.comments + p.views), reverse=True)[:5]
+        for platform_id, items in grouped.items():
+            top_items = sorted(
+                items,
+                key=lambda p: ((p.like_count or 0) + (p.comment_count or 0) + (p.view_count or 0)),
+                reverse=True,
+            )[:5]
             platform_summaries.append({
-                "platform": platform,
+                "platform": platform_id,
                 "count": len(items),
                 "top_posts": [
                     {
                         "url": p.post_url,
-                        "content": p.content[:120],
-                        "likes": p.likes,
-                        "comments": p.comments,
-                        "views": p.views,
+                        "content": (p.text_content or "")[:120],
+                        "likes": p.like_count,
+                        "comments": p.comment_count,
+                        "views": p.view_count,
                     }
                     for p in top_items
                 ],
@@ -40,4 +44,4 @@ class SummaryService:
         }
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(brand_name={self.brand_name!r})"
+        return f"{self.__class__.__name__}()"

@@ -1,5 +1,4 @@
-from dataclasses import dataclass, field
-
+from src.common.types import BrandConfig
 from src.common.utils import yesterday_range
 from src.resource.repository import (
     SocialCrawlAccountRepository,
@@ -8,17 +7,6 @@ from src.resource.repository import (
 )
 from src.notifier.slack import SlackNotifier
 from src.social.instagram import InstagramCrawler
-
-
-@dataclass
-class BrandConfig:
-    """크롤링 대상 브랜드 설정 (임시 — 향후 DB 테이블로 이관 예정)."""
-
-    brand_id: int
-    brand_name: str                              # 로깅/모니터링용
-    account_type: str                            # KR | HQ
-    instagram_handle: str | None = None
-    search_keywords: list[str] = field(default_factory=list)
 
 
 class CrawlService:
@@ -65,7 +53,7 @@ class CrawlService:
 
                 try:
                     posts = crawler.crawl(
-                        brand_id=target.brand_id,
+                        brand_name=target.brand_name,
                         handle=handle,
                         account_type=target.account_type,
                         search_keywords=target.search_keywords,
@@ -74,7 +62,8 @@ class CrawlService:
                     )
 
                     '''
-                    junk_keywords = self.keyword_repo.list_junk_keywords(platform, target.brand_id)
+                    # TODO: DB 이관 후 brand_id를 brand 테이블에서 조회하여 전달
+                    junk_keywords = self.keyword_repo.list_junk_keywords(platform, None)
                     filtered_posts = [
                         p for p in posts
                         if not self.filter.should_skip(p.text_content, junk_keywords)
@@ -82,7 +71,7 @@ class CrawlService:
 
                     saved_posts = []
                     for post in filtered_posts:
-                        if self.post_repo.exists(post.platform, post.post_id):
+                        if self.post_repo.exists(post.platform_id, post.post_id):
                             continue
                         self.post_repo.save(post)
                         saved_posts.append(post)
@@ -119,7 +108,6 @@ class CrawlService:
     def _get_test_targets() -> list[BrandConfig]:
         return [
             BrandConfig(
-                brand_id=1,
                 brand_name="인스타그램",
                 account_type="KR",
                 instagram_handle="instagram",

@@ -3,12 +3,29 @@ from datetime import datetime
 
 
 @dataclass
+class BrandConfig:
+    """크롤링 대상 브랜드 설정 (임시 — 향후 DB 테이블로 이관 예정).
+
+    DB 이관 시 각 필드 출처:
+      brand_name      → brand.brand_name
+      account_type    → brand_assignee.account_type
+      instagram_handle→ brand_assignee.account_id  (platform_id='instagram')
+      search_keywords → social_crawl_exclude_keyword (keyword_type='CASE2_FILTER')
+    """
+
+    brand_name: str
+    account_type: str                            # KR | HQ → brand_assignee.account_type
+    instagram_handle: str | None = None          # → brand_assignee.account_id (platform_id='instagram')
+    search_keywords: list[str] = field(default_factory=list)  # → social_crawl_exclude_keyword (CASE2_FILTER)
+
+
+@dataclass
 class CrawlAccount:
     """크롤링용 로그인 계정 (social_crawl_account)."""
 
     account_id: int
     name: str
-    platform: str
+    platform_id: str
     login_id: str
     login_pw: str
     status: str
@@ -19,9 +36,9 @@ class SocialPost:
     """수집된 소셜 게시물 (social_post_crawl)."""
 
     # 수집 메타
-    platform: str
+    platform_id: str
     crawl_case: str           # CASE1: 공식계정 | CASE2: 키워드검색
-    brand_id: int
+    brand_name: str
     account_id: str
     account_type: str         # KR | HQ
 
@@ -54,6 +71,6 @@ class SocialPost:
     @property
     def is_valid(self) -> bool:
         return bool(
-            self.platform and self.brand_id > 0 and self.account_id
+            self.platform_id and self.brand_name and self.account_id
             and self.post_id and self.post_url and self.posted_at
         )

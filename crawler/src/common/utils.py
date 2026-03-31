@@ -42,24 +42,3 @@ def rotate_session(self, proxy: dict[str, str] | None = None) -> None:
 
     if proxy:
         self.loader.context.proxy = proxy
-
-'''
-def _parse_count(text: str) -> int:
-    """'1.2만', '1,234', '1.5K' 형식을 숫자로 변환"""
-    text = text.strip().replace(",", "").replace(" ", "")
-
-    multipliers = {"k": 1000, "K": 1000, "만": 10000, "m": 1000000, "M": 1000000}
-
-    for suffix, mult in multipliers.items():
-        if suffix in text:
-            try:
-                num = float(re.sub(r"[^\d.]", "", text.replace(suffix, "")))
-                return int(num * mult)
-            except ValueError:
-                return 0
-
-    try:
-        return int(re.sub(r"[^\d]", "", text))
-    except ValueError:
-        return 0
-'''
