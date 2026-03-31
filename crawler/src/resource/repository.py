@@ -1,156 +1,147 @@
-from pymysql.cursors import DictCursor
+import json
+from sqlalchemy import or_, select
+from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.orm import Session
 
-from src.common.types import BrandTarget, SocialPost
+from src.common.types import CrawlAccount, SocialPost
+from src.resource.models import SocialCrawlAccount, SocialCrawlExcludeKeyword, SocialPostCrawl
 
 
-class BrandRepository:
-    def __init__(self, conn):
-        self.conn = conn
+class SocialCrawlAccountRepository:
+    """크롤링용 로그인 계정 조회 (social_crawl_account)."""
 
-    def list_active_targets(self) -> list[BrandTarget]:
-        sql = """
-              SELECT
-                  id, brand_name,
-                  instagram_handle, tiktok_username, twitter_handle,
-                  search_keywords, junk_keywords
-              FROM brands
-              WHERE is_active = 1 \
-              """
-        with self.conn.cursor(DictCursor) as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
+    def __init__(self, session: Session):
+        self.session = session
 
+    def list_active(self, platform: str | None = None) -> list[CrawlAccount]:
+        stmt = select(SocialCrawlAccount).where(SocialCrawlAccount.status == "ACTIVE")
+        if platform:
+            stmt = stmt.where(SocialCrawlAccount.platform == platform)
+
+        rows = self.session.execute(stmt).scalars().all()
         return [
-            BrandTarget(
-                id=row["id"],
-                brand_name=row["brand_name"],
-                instagram_handle=row.get("instagram_handle"),
-                tiktok_username=row.get("tiktok_username"),
-                twitter_handle=row.get("twitter_handle"),
-                search_keywords=row.get("search_keywords") or [],
-                junk_keywords=row.get("junk_keywords") or [],
-                is_active=True,
-            )
-            for row in rows
-        ]
-
-    def list_active_targets_test(self) -> list[BrandTarget]:
-        return [
-            BrandTarget(
-                id=12391,
-                brand_name='bbbb',
-                instagram_handle='instagram',
-                #instagram_handle='musinsa.offcial',
-                tiktok_username='dddd',
-                twitter_handle='eeeee',
-                search_keywords='ffff' or [],
-                junk_keywords='ggggg' or [],
-                is_active=True,
-            )
-        ]
-
-    def list_active_instagram_targets(self) -> list[BrandTarget]:
-        sql = """
-              SELECT
-                  id, brand_name,
-                  instagram_handle, search_keywords, junk_keywords
-              FROM brands
-              WHERE is_active = 1
-                AND instagram_handle IS NOT NULL \
-              """
-        with self.conn.cursor(DictCursor) as cur:
-            cur.execute(sql)
-            rows = cur.fetchall()
-
-        return [
-            BrandTarget(
-                id=row["id"],
-                brand_name=row["brand_name"],
-                instagram_handle=row.get("instagram_handle"),
-                search_keywords=row.get("search_keywords") or [],
-                junk_keywords=row.get("junk_keywords") or [],
+            CrawlAccount(
+                account_id=row.account_id,
+                name=row.name,
+                platform=row.platform,
+                login_id=row.login_id,
+                login_pw=row.login_pw,
+                status=row.status,
             )
             for row in rows
         ]
 
 
-class SocialPostRepository:
-    def __init__(self, conn):
-        self.conn = conn
+class SocialPostCrawlRepository:
+    """소셜 미디어 게시물 수집 데이터 저장/조회 (social_post_crawl)."""
 
-    def exists(self, platform: str, external_post_id: str) -> bool:
-        sql = """
-              SELECT 1
-              FROM social_posts
-              WHERE platform = %s AND external_post_id = %s
-                  LIMIT 1 \
-              """
-        with self.conn.cursor() as cur:
-            cur.execute(sql, (platform, external_post_id))
-            return cur.fetchone() is not None
+    def __init__(self, session: Session):
+        self.session = session
+
+    def exists(self, platform: str, post_id: str) -> bool:
+        stmt = (
+            select(SocialPostCrawl.crawl_id)
+            .where(SocialPostCrawl.platform == platform, SocialPostCrawl.post_id == post_id)
+            .limit(1)
+        )
+        return self.session.execute(stmt).scalar() is not None
 
     def save(self, post: SocialPost) -> None:
-        sql = """
-              INSERT INTO social_posts (
-                  brand_id, platform, external_post_id, post_url,
-                  content, likes, comments, shares, views,
-                  posted_at, crawled_at
-              )
-              VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
-                  ON DUPLICATE KEY UPDATE
-                                       post_url = VALUES(post_url),
-                                       content = VALUES(content),
-                                       likes = VALUES(likes),
-                                       comments = VALUES(comments),
-                                       shares = VALUES(shares),
-                                       views = VALUES(views),
-                                       posted_at = VALUES(posted_at),
-                                       crawled_at = NOW() \
-              """
-        with self.conn.cursor() as cur:
-            cur.execute(sql, (
-                post.brand_id,
-                post.platform,
-                post.external_post_id,
-                post.post_url,
-                post.content,
-                post.likes,
-                post.comments,
-                post.shares,
-                post.views,
-                post.posted_at,
-            ))
+        values = dict(
+            platform=post.platform,
+            crawl_case=post.crawl_case,
+            brand_id=post.brand_id,
+            account_id=post.account_id,
+            account_type=post.account_type,
+            post_id=post.post_id,
+            post_url=post.post_url,
+            post_type=post.post_type,
+            posted_at=post.posted_at,
+            post_title=post.post_title,
+            text_content=post.text_content,
+            person_tags=json.dumps(post.person_tags, ensure_ascii=False) if post.person_tags else None,
+            hashtags=json.dumps(post.hashtags, ensure_ascii=False) if post.hashtags else None,
+            media_url=post.media_url,
+            view_count=post.view_count,
+            like_count=post.like_count,
+            comment_count=post.comment_count,
+            share_count=post.share_count,
+            matched_keywords=json.dumps(post.matched_keywords, ensure_ascii=False) if post.matched_keywords else None,
+            author_name=post.author_name,
+            author_followers=post.author_followers,
+            raw_data=post.raw_data,
+        )
+        stmt = insert(SocialPostCrawl).values(**values)
+        stmt = stmt.on_duplicate_key_update(
+            post_url=stmt.inserted.post_url,
+            post_type=stmt.inserted.post_type,
+            post_title=stmt.inserted.post_title,
+            text_content=stmt.inserted.text_content,
+            person_tags=stmt.inserted.person_tags,
+            hashtags=stmt.inserted.hashtags,
+            media_url=stmt.inserted.media_url,
+            view_count=stmt.inserted.view_count,
+            like_count=stmt.inserted.like_count,
+            comment_count=stmt.inserted.comment_count,
+            share_count=stmt.inserted.share_count,
+            matched_keywords=stmt.inserted.matched_keywords,
+            author_followers=stmt.inserted.author_followers,
+            raw_data=stmt.inserted.raw_data,
+        )
+        self.session.execute(stmt)
 
     def commit(self) -> None:
-        self.conn.commit()
+        self.session.commit()
 
 
-class CrawlJobRepository:
-    def __init__(self, conn):
-        self.conn = conn
+class SocialCrawlExcludeKeywordRepository:
+    """필터 키워드 조회 (social_crawl_exclude_keyword)."""
 
-    def start(self, brand_id: int, platform: str) -> int:
-        sql = """
-              INSERT INTO crawl_jobs (brand_id, platform, status, started_at)
-              VALUES (%s, %s, 'running', NOW()) \
-              """
-        with self.conn.cursor() as cur:
-            cur.execute(sql, (brand_id, platform))
-            return cur.lastrowid
+    def __init__(self, session: Session):
+        self.session = session
 
-    def finish(self, job_id: int, status: str, found: int, saved: int, error_message: str | None = None) -> None:
-        sql = """
-              UPDATE crawl_jobs
-              SET finished_at = NOW(),
-                  status = %s,
-                  items_found = %s,
-                  items_saved = %s,
-                  error_message = %s,
-                  finished_at = NOW()
-              WHERE id = %s \
-              """
-        with self.conn.cursor() as cur:
-            cur.execute(sql, (status, found, saved, error_message, job_id))
+    def list_junk_keywords(
+        self,
+        platform: str | None = None,
+        brand_id: int | None = None,
+    ) -> list[str]:
+        """정크 키워드 목록 반환 (junk_keyword IS NOT NULL 행)."""
+        stmt = (
+            select(SocialCrawlExcludeKeyword.junk_keyword)
+            .where(
+                SocialCrawlExcludeKeyword.is_active == 1,
+                SocialCrawlExcludeKeyword.junk_keyword.is_not(None),
+                or_(
+                    SocialCrawlExcludeKeyword.platform.is_(None),
+                    SocialCrawlExcludeKeyword.platform == platform,
+                ),
+                or_(
+                    SocialCrawlExcludeKeyword.brand_id.is_(None),
+                    SocialCrawlExcludeKeyword.brand_id == brand_id,
+                ),
+            )
+        )
+        return [row for row in self.session.execute(stmt).scalars().all()]
 
-    def commit(self) -> None:
-        self.conn.commit()
+    def list_filter_keywords(
+        self,
+        platform: str | None = None,
+        brand_id: int | None = None,
+    ) -> list[str]:
+        """CASE2 수집 필터 키워드 목록 반환 (filter_keyword IS NOT NULL 행)."""
+        stmt = (
+            select(SocialCrawlExcludeKeyword.filter_keyword)
+            .where(
+                SocialCrawlExcludeKeyword.is_active == 1,
+                SocialCrawlExcludeKeyword.filter_keyword.is_not(None),
+                or_(
+                    SocialCrawlExcludeKeyword.platform.is_(None),
+                    SocialCrawlExcludeKeyword.platform == platform,
+                ),
+                or_(
+                    SocialCrawlExcludeKeyword.brand_id.is_(None),
+                    SocialCrawlExcludeKeyword.brand_id == brand_id,
+                ),
+            )
+        )
+        return [row for row in self.session.execute(stmt).scalars().all()]

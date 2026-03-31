@@ -336,6 +336,7 @@ class InstagramCrawler(BaseCrawler):
             self,
             brand_id: int,
             handle: str,
+            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
@@ -343,7 +344,7 @@ class InstagramCrawler(BaseCrawler):
         """공식 계정 크롤링 (동기 래퍼)"""
         return asyncio.run(
             self._crawl_official_account_async(
-                brand_id, handle, search_keywords, start_dt, end_dt
+                brand_id, handle, account_type, search_keywords, start_dt, end_dt
             )
         )
 
@@ -351,6 +352,7 @@ class InstagramCrawler(BaseCrawler):
             self,
             brand_id: int,
             handle: str,
+            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
@@ -401,22 +403,25 @@ class InstagramCrawler(BaseCrawler):
 
                 posts.append(
                     SocialPost(
-                        brand_id=brand_id,
                         platform=self.platform,
-                        external_post_id=post_data.post_id,
-                        follower_count=follower_count,
+                        crawl_case="CASE1",
+                        brand_id=brand_id,
+                        account_id=handle,
+                        account_type=account_type,
+                        post_id=post_data.post_id,
                         post_url=post_data.url,
-                        image_url=post_data.image_url,
-                        content=post_data.content,
-                        likes=post_data.likes,
-                        comments=post_data.comments,
-                        views=post_data.views,
                         posted_at=post_data.posted_at,
-                        crawled_at=datetime.now(),
+                        text_content=post_data.content,
+                        media_url=post_data.image_url,
+                        like_count=post_data.likes,
+                        comment_count=post_data.comments,
+                        view_count=post_data.views,
+                        author_followers=follower_count,
                         matched_keywords=[
                             k for k in search_keywords
-                            if k and k.lower() in post_data.content.lower()
+                            if k and k.lower() in (post_data.content or "").lower()
                         ],
+                        raw_data=node,
                     )
                 )
             logger.info("########### posts : ")
@@ -436,22 +441,24 @@ class InstagramCrawler(BaseCrawler):
     def crawl_search(
             self,
             brand_id: int,
+            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
     ) -> list[SocialPost]:
         """해시태그 검색 크롤링 (동기 래퍼)"""
 
-        return None
+        return []
         '''
         return asyncio.get_event_loop().run_until_complete(
-            self._crawl_search_async(brand_id, search_keywords, start_dt, end_dt)
+            self._crawl_search_async(brand_id, account_type, search_keywords, start_dt, end_dt)
         )
         '''
 
     async def _crawl_search_async(
             self,
             brand_id: int,
+            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
@@ -491,19 +498,21 @@ class InstagramCrawler(BaseCrawler):
 
                         posts.append(
                             SocialPost(
-                                brand_id=brand_id,
                                 platform=self.platform,
-                                external_post_id=post_data.post_id,
-                                follower_count=0, #follower_count,
+                                crawl_case="CASE2",
+                                brand_id=brand_id,
+                                account_id=tag,
+                                account_type=account_type,
+                                post_id=post_data.post_id,
                                 post_url=post_data.url,
-                                image_url=post_data.image_url,
-                                content=post_data.content,
-                                likes=post_data.likes,
-                                comments=post_data.comments,
-                                views=post_data.views,
                                 posted_at=post_data.posted_at,
-                                crawled_at=datetime.now(),
+                                text_content=post_data.content,
+                                media_url=post_data.image_url,
+                                like_count=post_data.likes,
+                                comment_count=post_data.comments,
+                                view_count=post_data.views,
                                 matched_keywords=[keyword],
+                                raw_data=node,
                             )
                         )
 
