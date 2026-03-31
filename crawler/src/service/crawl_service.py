@@ -63,7 +63,6 @@ class CrawlService:
                     posts = crawler.crawl(
                         brand_name=target.brand_name,
                         handle=handle,
-                        account_type=target.account_type,
                         search_keywords=target.search_keywords,
                         start_dt=start_dt,
                         end_dt=end_dt,
@@ -116,7 +115,6 @@ class CrawlService:
         return [
             BrandConfig(
                 brand_name="인스타그램",
-                account_type="KR",
                 instagram_handle="instagram",
                 #instagram_handle="musinsa.official",
                 search_keywords=[],

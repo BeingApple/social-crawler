@@ -52,7 +52,6 @@ class SocialPostCrawlRepository:
             crawl_case=post.crawl_case,
             brand_name=post.brand_name,
             account_id=post.account_id,
-            account_type=post.account_type,
             post_id=post.post_id,
             post_url=post.post_url,
             post_type=post.post_type,

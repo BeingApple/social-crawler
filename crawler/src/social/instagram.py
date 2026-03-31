@@ -352,7 +352,6 @@ class InstagramCrawler(BaseCrawler):
             self,
             brand_name: str,
             handle: str,
-            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
@@ -360,7 +359,7 @@ class InstagramCrawler(BaseCrawler):
         """공식 계정 크롤링 (동기 래퍼)"""
         return asyncio.run(
             self._crawl_official_account_async(
-                brand_name, handle, account_type, search_keywords, start_dt, end_dt
+                brand_name, handle, search_keywords, start_dt, end_dt
             )
         )
 
@@ -368,7 +367,6 @@ class InstagramCrawler(BaseCrawler):
             self,
             brand_name: str,
             handle: str,
-            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
@@ -423,7 +421,6 @@ class InstagramCrawler(BaseCrawler):
                         crawl_case="CASE1",
                         brand_name=brand_name,
                         account_id=handle,
-                        account_type=account_type,
                         post_id=post_data.post_id,
                         post_url=post_data.url,
                         posted_at=post_data.posted_at,
@@ -459,7 +456,6 @@ class InstagramCrawler(BaseCrawler):
     def crawl_search(
             self,
             brand_name: str,
-            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
@@ -468,7 +464,7 @@ class InstagramCrawler(BaseCrawler):
 
         '''
         return asyncio.get_event_loop().run_until_complete(
-            self._crawl_search_async(brand_name, account_type, search_keywords, start_dt, end_dt)
+            self._crawl_search_async(brand_name, search_keywords, start_dt, end_dt)
         )
         '''
 
@@ -477,7 +473,6 @@ class InstagramCrawler(BaseCrawler):
     async def _crawl_search_async(
             self,
             brand_name: str,
-            account_type: str,
             search_keywords: list[str],
             start_dt: datetime,
             end_dt: datetime,
@@ -521,7 +516,6 @@ class InstagramCrawler(BaseCrawler):
                                 crawl_case="CASE2",
                                 brand_name=brand_name,
                                 account_id=tag,
-                                account_type=account_type,
                                 post_id=post_data.post_id,
                                 post_url=post_data.url,
                                 posted_at=post_data.posted_at,

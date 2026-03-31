@@ -3,9 +3,9 @@ export interface BrandAssignee {
   brandId: number
   brandName: string | null
   platformId: string
+  region: string | null
   assigneeName: string
   accountId: string
-  accountType: string
   active: boolean
 }
 
@@ -13,7 +13,7 @@ export interface AssigneeFilters {
   assigneeName: string
   brandName: string
   platformId: string   // '' = ALL
+  region: string       // '' = ALL
   accountId: string
-  accountType: string  // '' = ALL
   active: 'ALL' | 'ON' | 'OFF'
 }

@@ -4,7 +4,6 @@ export interface SocialPostCrawl {
   crawlCase: string
   brandName: string
   accountId: string
-  accountType: string
   postId: string
   postUrl: string
   postType: string | null
@@ -37,7 +36,6 @@ export interface FetchPostsParams {
   platformId?: string
   brandName?: string
   crawlCase?: string
-  accountType?: string
   postedFrom?: string   // ISO date (YYYY-MM-DD)
   postedTo?: string     // ISO date (YYYY-MM-DD)
   page?: number

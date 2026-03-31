@@ -12,20 +12,20 @@ public class AssigneeResponse {
     private Long brandId;
     private String brandName;
     private String platformId;
+    private String region;
     private String assigneeName;
     private String accountId;
-    private String accountType;
     private boolean active;
 
-    public static AssigneeResponse from(BrandAssignee a) {
+    public static AssigneeResponse from(BrandAssignee a, String region) {
         return AssigneeResponse.builder()
                 .assigneeId(a.getAssigneeId())
                 .brandId(a.getBrand() != null ? a.getBrand().getBrandId() : null)
                 .brandName(a.getBrand() != null ? a.getBrand().getBrandName() : null)
                 .platformId(a.getPlatformId())
+                .region(region)
                 .assigneeName(a.getAssigneeName())
                 .accountId(a.getAccountId())
-                .accountType(a.getAccountType())
                 .active(a.isActive())
                 .build();
     }

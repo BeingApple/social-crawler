@@ -19,7 +19,7 @@ const columns: GridColDef[] = [
     width: 130,
     valueFormatter: (value: string) => PLATFORM_LABELS[value] ?? value,
   },
-  { field: 'accountType',  headerName: '계정 구분',     width: 100 },
+  { field: 'region',       headerName: '지역 구분',     width: 90  },
   { field: 'assigneeName', headerName: '담당자명',      width: 110 },
   {
     field: 'active',
@@ -49,7 +49,7 @@ export default function DataTable({ assignees, filters }: Props) {
       if (filters.brandName && !(a.brandName ?? '').toLowerCase().includes(filters.brandName.toLowerCase())) return false
       if (filters.platformId && a.platformId !== filters.platformId) return false
       if (filters.accountId && !a.accountId.toLowerCase().includes(filters.accountId.toLowerCase())) return false
-      if (filters.accountType && a.accountType !== filters.accountType) return false
+      if (filters.region && a.region !== filters.region) return false
       if (filters.active !== 'ALL') {
         const isActive = filters.active === 'ON'
         if (a.active !== isActive) return false
