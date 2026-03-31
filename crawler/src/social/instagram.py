@@ -7,13 +7,13 @@ import os
 import random
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any
 
-from playwright.async_api import async_playwright, Browser, Page, BrowserContext
+from playwright.async_api import async_playwright, Browser, Page, BrowserContext, Playwright
 from src.common.types import SocialPost
 from src.common.utils import contains_any, random_user_agent
 from src.social.base import BaseCrawler
@@ -30,6 +30,8 @@ class InstagramPageData:
     likes: int = 0
     comments: int = 0
     views: int = 0
+    mentions: list[str] = field(default_factory=list)
+    hashtags: list[str] = field(default_factory=list)
     posted_at: datetime | None = None
 
 
@@ -58,6 +60,7 @@ class InstagramCrawler(BaseCrawler):
         self._password = os.getenv("INSTAGRAM_PASSWORD", "")
 
         # Playwright 객체 (lazy init)
+        self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self._context: BrowserContext | None = None
 
@@ -66,7 +69,7 @@ class InstagramCrawler(BaseCrawler):
         if self._context:
             return self._context
 
-        playwright = await async_playwright().start()
+        self._playwright = await async_playwright().start()
 
         # 브라우저 시작 옵션
         launch_options: dict[str, Any] = {
@@ -84,7 +87,7 @@ class InstagramCrawler(BaseCrawler):
                 "server": self._proxy.get("http") or self._proxy.get("https", ""),
             }
 
-        self._browser = await playwright.chromium.launch(**launch_options)
+        self._browser = await self._playwright.chromium.launch(**launch_options)
 
         # 컨텍스트 옵션 (모바일처럼 보이게)
         context_options: dict[str, Any] = {
@@ -204,7 +207,7 @@ class InstagramCrawler(BaseCrawler):
 
             # 프로필 아이콘이 보이면 로그인 상태
             #profile_icon = page.locator('svg[aria-label="홈"], svg[aria-label="Home"]')
-            profile_icon = page.locator('img[crossorigin="anonymous"]')
+            profile_icon = page.locator("img[crossorigin='anonymous']")
             return await profile_icon.count() > 0
 
         except Exception as e:
@@ -233,11 +236,16 @@ class InstagramCrawler(BaseCrawler):
 
             views = node.get("view_count") or node.get("play_count") or 0
 
+            mentions = re.findall(r'@\w.+', content)
+            hashtags = re.findall(r'#\w.+', content)
+
             return InstagramPageData(
                 post_id=shortcode,
                 url=f"https://www.instagram.com/p/{shortcode}/",
                 content=content,
                 image_url=image_url,
+                mentions=mentions,
+                hashtags=hashtags,
                 likes=node.get("like_count", 0),
                 comments=node.get("comment_count", 0),
                 views=views,
@@ -425,7 +433,9 @@ class InstagramCrawler(BaseCrawler):
                     )
                 )
             logger.info("########### posts : ")
-            logger.info(posts)
+            for post in posts:
+                logger.info(post)
+
             return posts
 
         except Exception as e:
@@ -448,12 +458,13 @@ class InstagramCrawler(BaseCrawler):
     ) -> list[SocialPost]:
         """해시태그 검색 크롤링 (동기 래퍼)"""
 
-        return []
         '''
         return asyncio.get_event_loop().run_until_complete(
             self._crawl_search_async(brand_name, account_type, search_keywords, start_dt, end_dt)
         )
         '''
+
+        return []
 
     async def _crawl_search_async(
             self,
@@ -531,15 +542,33 @@ class InstagramCrawler(BaseCrawler):
 
     async def close(self) -> None:
         """브라우저 종료"""
-        if self._context:
-            await self._context.close()
-        if self._browser:
-            await self._browser.close()
+        try:
+            if self._context:
+                await self._context.close()
+                self._context = None
+        except Exception as e:
+            logger.debug("context close error: %s", e)
+
+        try:
+            if self._browser:
+                await self._browser.close()
+                self._browser = None
+        except Exception as e:
+            logger.debug("browser close error: %s", e)
+
+        try:
+            if self._playwright:
+                await self._playwright.stop()
+                self._playwright = None
+        except Exception as e:
+            logger.debug("playwright stop error: %s", e)
+
+        logger.info("instagram crawler resources cleaned up")
 
     def __del__(self) -> None:
         """소멸자에서 브라우저 정리"""
-        try:
-            if self._browser:
-                asyncio.get_event_loop().run_until_complete(self.close())
-        except Exception:
-            pass
+        if self._browser or self._context or self._playwright:
+            logger.warning(
+                "InstagramCrawler was not properly closed. "
+                "Call 'await crawler.close()' or use async context manager."
+            )
