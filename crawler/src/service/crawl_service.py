@@ -114,8 +114,6 @@ class CrawlService:
 
                     saved_posts = []
                     for post in filtered_posts:
-                        if self.post_repo.exists(post.platform_id, post.post_id):
-                            continue
                         self.post_repo.save(post)
                         saved_posts.append(post)
 

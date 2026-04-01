@@ -4,6 +4,7 @@ export interface SocialPostCrawl {
   crawlCase: string
   brandName: string
   accountId: string
+  accountType: string
   postId: string
   postUrl: string
   postType: string | null

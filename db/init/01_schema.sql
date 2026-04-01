@@ -1,3 +1,6 @@
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 -- ============================================================
 -- brand-social-crawler 스키마
 -- Aurora MySQL 8.0 호환

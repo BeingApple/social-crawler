@@ -30,6 +30,9 @@ public class SocialPostCrawl {
     @Column(nullable = false, length = 200)
     private String accountId;
 
+    @Column(nullable = false, length = 10)
+    private String accountType;
+
     // 게시물 정보
     @Column(nullable = false, length = 200)
     private String postId;

@@ -85,14 +85,6 @@ class SocialPostCrawlRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def exists(self, platform_id: str, post_id: str) -> bool:
-        stmt = (
-            select(SocialPostCrawl.spc_id)
-            .where(SocialPostCrawl.platform_id == platform_id, SocialPostCrawl.post_id == post_id)
-            .limit(1)
-        )
-        return self.session.execute(stmt).scalar() is not None
-
     def save(self, post: SocialPost) -> None:
         values = dict(
             platform_id=post.platform_id,

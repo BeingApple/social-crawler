@@ -242,8 +242,8 @@ class InstagramCrawler(BaseCrawler):
 
             views = node.get("view_count") or node.get("play_count") or 0
 
-            mentions = re.findall(r'@\w.+', content)
-            hashtags = re.findall(r'#\w.+', content)
+            mentions = re.findall(r'@[\w.]+', content)
+            hashtags = re.findall(r'#\w+', content)
 
             #comment_count = node.get("comment_count", 0)
             #like_count = node.get("like_count", 0)
@@ -427,6 +427,8 @@ class InstagramCrawler(BaseCrawler):
                         post_url=post_data.url,
                         posted_at=post_data.posted_at,
                         text_content=post_data.content,
+                        hashtags=post_data.hashtags,
+                        person_tags=post_data.mentions,
                         media_url=post_data.media_url,
                         like_count=post_data.likes,
                         comment_count=post_data.comments,
@@ -529,6 +531,8 @@ class InstagramCrawler(BaseCrawler):
                                 post_url=post_data.url,
                                 posted_at=post_data.posted_at,
                                 text_content=post_data.content,
+                                hashtags=post_data.hashtags,
+                                person_tags=post_data.mentions,
                                 media_url=post_data.media_url,
                                 like_count=post_data.likes,
                                 comment_count=post_data.comments,
