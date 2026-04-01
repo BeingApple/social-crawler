@@ -29,3 +29,7 @@ logging:
   level:
     com.musinsa: DEBUG
     org.hibernate.SQL: DEBUG
+
+# AES-256-GCM 암호화 키 (운영 시 환경변수 ENCRYPTION_SECRET_KEY 로 반드시 교체)
+encryption:
+  secret-key: ${ENCRYPTION_SECRET_KEY:ChangeThisSecretKeyInProduction!!}

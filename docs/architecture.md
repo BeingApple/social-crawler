@@ -186,8 +186,8 @@ INDEX idx_is_junk            (is_junk)
 account_id   BIGINT UNSIGNED   PK AUTO_INCREMENT
 name         VARCHAR(100)      -- 계정 별칭 또는 담당자명
 platform_id  VARCHAR(50)       FK → social_platform
-login_id     VARCHAR(200)      -- 로그인 ID (암호화 권장)
-login_pw     VARCHAR(500)      -- 로그인 PW (AES-256 암호화 필수)
+login_id     VARCHAR(200)      -- 로그인 ID (AES-256-GCM 암호화, Base64 저장)
+login_pw     VARCHAR(500)      -- 로그인 PW (AES-256-GCM 암호화, Base64 저장)
 issue        TEXT              -- 이슈 사항 (차단, 세션 만료, 2FA 등)
 status       VARCHAR(20)       -- 'ACTIVE' | 'BLOCKED' | 'EXPIRED' | 'PAUSED'
 created_at   DATETIME
@@ -195,6 +195,8 @@ updated_at   DATETIME
 
 UNIQUE KEY uq_platform_login_id (platform_id, login_id)
 ```
+
+> **암호화 상세** → [9. 자격증명 암호화](#9-자격증명-암호화-social_crawl_account) 참조
 
 ---
 
@@ -327,7 +329,53 @@ Instagram 내부 GraphQL 응답(`xdt_api__v1__feed__user_timeline_graphql_connec
 
 ---
 
-## 7. Backend API 엔드포인트 (현재 구현)
+## 7. 자격증명 암호화 (social_crawl_account)
+
+### 7-1. 알고리즘
+
+| 항목 | 값 |
+|------|----|
+| 알고리즘 | AES-256-GCM (Galois/Counter Mode) |
+| 키 길이 | 256 bit (32 bytes) |
+| IV 길이 | 96 bit (12 bytes), 암호화마다 `SecureRandom` 으로 생성 |
+| 인증 태그 | 128 bit (GCM 기본값) |
+| 키 도출 | 환경변수 `ENCRYPTION_SECRET_KEY` 문자열 → SHA-256 해싱 → 256-bit 키 |
+| 저장 형식 | `Base64( IV[12B] \|\| CipherText+AuthTag )` |
+| 라이브러리 | Java 표준 `javax.crypto` (외부 의존성 없음) |
+
+### 7-2. 구현 위치
+
+```
+backend/src/main/java/com/musinsa/crawler/
+└── common/
+    └── AesEncryptionUtil.java      # @Component, encrypt() / decrypt()
+```
+
+### 7-3. API 엔드포인트
+
+| Method | Path | 설명 |
+|--------|------|------|
+| GET | `/api/crawl-accounts` | 전체 목록 (loginId 복호화, loginPw **미포함**) |
+| GET | `/api/crawl-accounts/{id}` | 단건 조회 (loginId 복호화, loginPw **미포함**) |
+| GET | `/api/crawl-accounts/{id}/decrypt` | loginId + loginPw **원문** 복호화 반환 |
+| POST | `/api/crawl-accounts` | 생성 (loginId, loginPw 암호화하여 저장) |
+| PUT | `/api/crawl-accounts/{id}` | 수정 (loginId, loginPw 재암호화) |
+| DELETE | `/api/crawl-accounts/{id}` | 삭제 |
+
+### 7-4. 운영 키 관리
+
+```bash
+# .env 또는 환경변수로 주입 (32자 이상 무작위 문자열 권장)
+ENCRYPTION_SECRET_KEY=<운영용_무작위_비밀키>
+```
+
+- 개발 기본값: `ChangeThisSecretKeyInProduction!!` (`.env.example` 참조)
+- **운영 배포 전 반드시 교체 필요**
+- 키가 변경되면 기존 암호화 데이터 복호화 불가 → 키 변경 시 데이터 재암호화 필요
+
+---
+
+## 8. Backend API 엔드포인트 (현재 구현)
 
 | Method | Path | 파라미터 | 설명 |
 |--------|------|---------|------|

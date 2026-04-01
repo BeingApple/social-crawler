@@ -302,6 +302,18 @@ make setup-python && make crawler  # Python 크롤러 로컬 실행
 - Python Repository: `SocialPostRepository.exists()` → 저장 전 존재 여부 확인
 - Crawler: `BaseCrawler.crawl()` → `deduped dict` 로 동일 세션 내 중복 제거
 
+### 자격증명 암호화 (social_crawl_account)
+
+| 항목 | 내용 |
+|------|------|
+| 알고리즘 | AES-256-GCM |
+| 키 도출 | `ENCRYPTION_SECRET_KEY` 환경변수 → SHA-256 → 256-bit 키 |
+| IV | 12 bytes, 암호화마다 `SecureRandom` 생성 |
+| 저장 형식 | `Base64(IV[12B] \|\| CipherText+AuthTag)` |
+| 구현체 | `common/AesEncryptionUtil.java` (`@Component`) |
+| 주요 API | `GET /api/crawl-accounts/{id}/decrypt` → 원문 복호화 반환 |
+| 키 변경 주의 | 키 변경 시 기존 데이터 복호화 불가 → 재암호화 필요 |
+
 ### 주요 패턴 및 컨벤션
 
 - **Crawler DB 접근**: SQLAlchemy가 코드에 존재하나 전체 주석 처리됨. 실제로는 PyMySQL raw cursor 사용
