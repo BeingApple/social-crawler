@@ -8,13 +8,11 @@ class BrandConfig:
 
     DB 이관 시 각 필드 출처:
       brand_name      → brand.brand_name
-      account_type    → brand_assignee.account_type
       instagram_handle→ brand_assignee.account_id  (platform_id='instagram')
       search_keywords → social_crawl_exclude_keyword (keyword_type='CASE2_FILTER')
     """
 
     brand_name: str
-    account_type: str                            # KR | HQ → brand_assignee.account_type
     instagram_handle: str | None = None          # → brand_assignee.account_id (platform_id='instagram')
     search_keywords: list[str] = field(default_factory=list)  # → social_crawl_exclude_keyword (CASE2_FILTER)
 
@@ -40,7 +38,6 @@ class SocialPost:
     crawl_case: str           # CASE1: 공식계정 | CASE2: 키워드검색
     brand_name: str
     account_id: str
-    account_type: str         # KR | HQ
 
     # 게시물 정보
     post_id: str

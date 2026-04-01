@@ -27,7 +27,6 @@ public class SocialPostCrawlController {
             @RequestParam(required = false) String platformId,
             @RequestParam(required = false) String brandName,
             @RequestParam(required = false) String crawlCase,
-            @RequestParam(required = false) String accountType,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate postedFrom,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate postedTo,
             @PageableDefault(size = 20) Pageable pageable
@@ -36,7 +35,7 @@ public class SocialPostCrawlController {
         LocalDateTime toDt   = postedTo   != null ? postedTo.plusDays(1).atStartOfDay() : null;
 
         Page<SocialPostCrawlResponse> page = postRepository
-                .findWithFilters(platformId, brandName, crawlCase, accountType, fromDt, toDt, pageable)
+                .findWithFilters(platformId, brandName, crawlCase, fromDt, toDt, pageable)
                 .map(SocialPostCrawlResponse::from);
 
         return ResponseEntity.ok(page);

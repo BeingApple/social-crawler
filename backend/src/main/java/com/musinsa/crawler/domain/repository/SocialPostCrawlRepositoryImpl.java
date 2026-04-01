@@ -24,7 +24,6 @@ public class SocialPostCrawlRepositoryImpl implements SocialPostCrawlRepositoryC
             String platformId,
             String brandName,
             String crawlCase,
-            String accountType,
             LocalDateTime postedFrom,
             LocalDateTime postedTo,
             Pageable pageable
@@ -35,7 +34,6 @@ public class SocialPostCrawlRepositoryImpl implements SocialPostCrawlRepositoryC
         if (platformId  != null && !platformId.isBlank())  where.and(post.platformId.eq(platformId));
         if (brandName   != null && !brandName.isBlank())   where.and(post.brandName.containsIgnoreCase(brandName));
         if (crawlCase   != null && !crawlCase.isBlank())   where.and(post.crawlCase.eq(crawlCase));
-        if (accountType != null && !accountType.isBlank()) where.and(post.accountType.eq(accountType));
         if (postedFrom  != null)                           where.and(post.postedAt.goe(postedFrom));
         if (postedTo    != null)                           where.and(post.postedAt.lt(postedTo));
 

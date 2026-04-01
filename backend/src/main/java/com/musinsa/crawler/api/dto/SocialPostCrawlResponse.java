@@ -15,7 +15,6 @@ public class SocialPostCrawlResponse {
     private String crawlCase;
     private String brandName;
     private String accountId;
-    private String accountType;
     private String postId;
     private String postUrl;
     private String postType;
@@ -42,7 +41,6 @@ public class SocialPostCrawlResponse {
                 .crawlCase(post.getCrawlCase())
                 .brandName(post.getBrandName())
                 .accountId(post.getAccountId())
-                .accountType(post.getAccountType())
                 .postId(post.getPostId())
                 .postUrl(post.getPostUrl())
                 .postType(post.getPostType())

@@ -27,9 +27,6 @@ public class BrandAssignee {
     @Column(nullable = false, length = 100)
     private String accountId;
 
-    @Column(nullable = false, length = 30)
-    private String accountType;
-
     @Column(name = "is_active", nullable = false)
     private boolean active;
 

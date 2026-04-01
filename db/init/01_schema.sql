@@ -26,7 +26,7 @@ COMMENT='브랜드 기본 정보';
 -- ③ 브랜드 SNS 채널 (브랜드 × 플랫폼 × 지역 매핑)
 CREATE TABLE IF NOT EXISTS brand_social_channel (
     channel_id      BIGINT          NOT NULL AUTO_INCREMENT,
-    brand_id        BIGINT          NOT NULL COMMENT 'brand.brand_id 참조',
+    brand_id        BIGINT          NOT NULL COMMENT 'brand.brand_idear 참조',
     platform_id     VARCHAR(50)     NOT NULL COMMENT 'social_platform.platform_id 참조',
     region          VARCHAR(10)     NOT NULL COMMENT '지역 구분 (KR, HQ 등)',
     channel_url     VARCHAR(200)    NULL     COMMENT 'SNS 채널 전체 URL (미등록 시 NULL)',
@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS brand_assignee (
     platform_id     VARCHAR(50)     NOT NULL COMMENT 'social_platform.platform_id 참조',
     assignee_name   VARCHAR(50)     NOT NULL COMMENT '담당자명',
     account_id      VARCHAR(100)    NOT NULL COMMENT '소셜 미디어 계정 아이디',
-    account_type    VARCHAR(30)     NOT NULL COMMENT '계정 구분 (KR, HQ 등)',
     is_active       TINYINT(1)      NOT NULL DEFAULT 1 COMMENT '활성화 상태 (1: 활성, 0: 비활성)',
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -64,7 +63,7 @@ CREATE TABLE IF NOT EXISTS social_post_crawl (
     crawl_case       VARCHAR(10)     NOT NULL COMMENT '수집 유형 (CASE1: 공식계정, CASE2: 키워드검색)',
     brand_name       VARCHAR(100)    NOT NULL COMMENT '브랜드명',
     account_id       VARCHAR(200)    NOT NULL COMMENT '계정 ID/핸들',
-    account_type     VARCHAR(10)     NOT NULL COMMENT '계정 유형 (KR, HQ)',
+    account_type     VARCHAR(10)     NOT NULL COMMENT '계정 유형 (brand_social_channel.region 참조: KR, HQ 등)',
     -- 게시물 정보
     post_id          VARCHAR(200)    NOT NULL COMMENT '게시물 고유 ID',
     post_url         VARCHAR(500)    NOT NULL COMMENT '게시물 원본 URL',

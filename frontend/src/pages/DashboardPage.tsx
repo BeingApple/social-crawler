@@ -6,16 +6,16 @@ import { fetchAssignees } from '../api/assignees'
 import type { BrandAssignee, AssigneeFilters } from '../types/brand'
 import { PLATFORM_OPTIONS } from '../constants/platform'
 
+const REGION_OPTIONS = ['KR', 'HQ']
+
 const INITIAL_FILTERS: AssigneeFilters = {
   assigneeName: '',
   brandName: '',
   platformId: '',
+  region: '',
   accountId: '',
-  accountType: '',
   active: 'ALL',
 }
-
-const ACCOUNT_TYPE_OPTIONS = ['KR', 'HQ']
 
 export default function DashboardPage() {
   const [assignees, setAssignees] = useState<BrandAssignee[]>([])
@@ -69,10 +69,10 @@ export default function DashboardPage() {
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
             <FormControl size="small" fullWidth>
-              <InputLabel>계정 구분</InputLabel>
-              <Select value={filters.accountType} label="계정 구분" onChange={handleSelect('accountType')}>
+              <InputLabel>지역 구분</InputLabel>
+              <Select value={filters.region} label="지역 구분" onChange={handleSelect('region')}>
                 <MenuItem value="">전체</MenuItem>
-                {ACCOUNT_TYPE_OPTIONS.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+                {REGION_OPTIONS.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>

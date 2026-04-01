@@ -9,7 +9,6 @@ import { fetchPosts } from '../api/posts'
 import type { SocialPostCrawl, FetchPostsParams } from '../types/post'
 import { PLATFORM_LABELS, PLATFORM_OPTIONS } from '../constants/platform'
 
-const ACCOUNT_TYPE_OPTIONS = ['KR', 'HQ']
 const CRAWL_CASE_OPTIONS   = [
   { value: 'CASE1', label: 'CASE1 (공식계정)' },
   { value: 'CASE2', label: 'CASE2 (키워드검색)' },
@@ -26,7 +25,6 @@ const columns: GridColDef<Row>[] = [
     valueFormatter: (value: string) => PLATFORM_LABELS[value] ?? value,
   },
   { field: 'crawlCase',   headerName: '수집 유형',       width: 110 },
-  { field: 'accountType', headerName: '계정 구분',       width: 90  },
   { field: 'accountId',   headerName: '계정명',          width: 130 },
   {
     field: 'authorFollowers',
@@ -120,7 +118,6 @@ interface Filters {
   dateTo:      string
   brandName:   string
   platformId:  string
-  accountType: string
   crawlCase:   string
 }
 
@@ -129,7 +126,6 @@ const INITIAL_FILTERS: Filters = {
   dateTo:      '',
   brandName:   '',
   platformId:  '',
-  accountType: '',
   crawlCase:   '',
 }
 
@@ -150,7 +146,6 @@ export default function CrawlingStatusPage() {
       platformId:  filters.platformId  || undefined,
       brandName:   filters.brandName   || undefined,
       crawlCase:   filters.crawlCase   || undefined,
-      accountType: filters.accountType || undefined,
       postedFrom:  filters.dateFrom    || undefined,
       postedTo:    filters.dateTo      || undefined,
       page,
@@ -229,17 +224,6 @@ export default function CrawlingStatusPage() {
                 {PLATFORM_OPTIONS.map(({ value, label }) => (
                   <MenuItem key={value} value={value}>{label}</MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* 계정 구분 */}
-          <Grid size={{ xs: 12, sm: 3 }}>
-            <FormControl size="small" fullWidth>
-              <InputLabel>계정 구분</InputLabel>
-              <Select value={filters.accountType} label="계정 구분" onChange={handleSelect('accountType')}>
-                <MenuItem value="">전체</MenuItem>
-                {ACCOUNT_TYPE_OPTIONS.map((v) => <MenuItem key={v} value={v}>{v}</MenuItem>)}
               </Select>
             </FormControl>
           </Grid>

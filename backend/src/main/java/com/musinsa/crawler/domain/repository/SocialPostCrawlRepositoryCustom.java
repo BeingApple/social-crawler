@@ -12,7 +12,6 @@ public interface SocialPostCrawlRepositoryCustom {
             String platformId,
             String brandName,
             String crawlCase,
-            String accountType,
             LocalDateTime postedFrom,
             LocalDateTime postedTo,
             Pageable pageable
