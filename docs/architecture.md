@@ -382,13 +382,19 @@ ENCRYPTION_SECRET_KEY=<운영용_무작위_비밀키>
 | GET | `/api/posts` | `platformId`, `brandName`, `crawlCase`, `postedFrom`, `postedTo`, `page`, `size`(기본 20), `sort` | 게시물 목록 (페이징 + 다중 필터) |
 | GET | `/api/posts/{spcId}` | - | 게시물 단건 조회 |
 | GET | `/api/assignees` | - | 담당자 목록 조회 |
+| GET | `/api/crawl-accounts` | - | 크롤 계정 목록 (loginPw 미포함) |
+| GET | `/api/crawl-accounts/{id}` | - | 크롤 계정 단건 조회 (loginPw 미포함) |
+| GET | `/api/crawl-accounts/{id}/decrypt` | - | loginId + loginPw 원문 복호화 반환 |
+| POST | `/api/crawl-accounts` | `SocialCrawlAccountRequest` | 크롤 계정 생성 (201) |
+| PUT | `/api/crawl-accounts/{id}` | `SocialCrawlAccountRequest` | 크롤 계정 수정 |
+| DELETE | `/api/crawl-accounts/{id}` | - | 크롤 계정 삭제 (204) |
 
 - Spring Data JPA + **QueryDSL** 기반 동적 쿼리 (`SocialPostCrawlRepositoryCustom` / `SocialPostCrawlRepositoryImpl`)
 - Service 레이어 없이 Controller → Repository 직접 호출 구조
 
 ---
 
-## 8. 현재 개발 상태 및 향후 과제
+## 9. 현재 개발 상태 및 향후 과제
 
 | 항목 | 상태 |
 |------|------|
@@ -400,3 +406,4 @@ ENCRYPTION_SECRET_KEY=<운영용_무작위_비밀키>
 | TikTok / X 크롤러 | 미구현 |
 | AI 요약 (Claude) | 미구현 |
 | Frontend 실제 API 연동 | 구현 완료 (DashboardPage: `/api/assignees`, CrawlingStatusPage: `/api/posts`) |
+| 크롤 계정 관리 (CRUD) | 구현 완료 (Backend API + Frontend CrawlAccountPage) |

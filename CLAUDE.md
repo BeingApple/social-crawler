@@ -101,7 +101,7 @@ collected_at, period
 |------|------|------|
 | **Crawler** | Python 3.11, Playwright 1.44, httpx 0.27, PyMySQL 1.1, schedule 1.2 | SQLAlchemy ORM은 코드가 주석 처리됨; 실제 DB 접근은 PyMySQL raw cursor |
 | **Backend** | Java 21, Spring Boot 3.3.0, Spring Data JPA, HikariCP, Lombok, Validation | Gradle 빌드 |
-| **Frontend** | React 18.3, TypeScript 5.5, Vite 8.0, MUI v5 + MUI v7 (icons/system), MUI X DataGrid v7, React Router v6, axios | MUI 버전 혼용 주의 (v5 core + v7 icons/system) |
+| **Frontend** | React 18.3, TypeScript 5.5, Vite 8.0, MUI v7, MUI X DataGrid v7, React Router v6, axios | |
 | **DB** | MySQL 8.0 (Aurora MySQL 8.0 호환) | InnoDB, utf8mb4_unicode_ci |
 | **인프라** | Docker Compose (4서비스), nginx (프론트 서빙 + API 프록시), Makefile | |
 
@@ -113,10 +113,10 @@ collected_at, period
   - `CrawlService`가 오케스트레이션: brand 조회 → crawler 실행 → 필터링 → 저장 → 알림
   - Repository 패턴: `BrandRepository`, `SocialPostRepository`, `CrawlJobRepository` (raw PyMySQL)
 - **Backend**: Spring 표준 레이어드 (Controller → Repository → Entity)
-  - 별도 Service 레이어 없이 Controller에서 직접 Repository 호출
-- **Frontend**: 페이지 기반 라우팅 + 샘플 데이터 기반 UI 프로토타입
-  - 실제 API 연동: PostListPage만 (axios → `/api/posts`)
-  - DashboardPage, CrawlingStatusPage는 하드코딩된 샘플 데이터 사용
+  - Service 레이어 없이 Controller → Repository 직접 호출
+  - QueryDSL 기반 동적 쿼리 (`SocialPostCrawlRepositoryCustom` / `SocialPostCrawlRepositoryImpl`)
+- **Frontend**: 페이지 기반 라우팅, 전 페이지 실제 API 연동 완료
+  - DashboardPage → `/api/assignees`, CrawlingStatusPage → `/api/posts`, CrawlAccountPage → `/api/crawl-accounts`
 
 ### 디렉토리 구조
 
@@ -219,49 +219,109 @@ brand-social-crawler/
 | Path | 페이지 | 데이터 소스 |
 |------|--------|------------|
 | `/` | `/accounts`로 리다이렉트 | - |
-| `/accounts` | DashboardPage (계정 리스트) | 샘플 데이터 (하드코딩) |
-| `/crawling` | CrawlingStatusPage (크롤링 현황) | 샘플 데이터 (하드코딩) |
-| `/dummy` | PostListPage (게시물 목록) | 실제 API (`/api/posts`) |
+| `/accounts` | DashboardPage (계정 리스트) | 실제 API (`/api/assignees`) |
+| `/crawling` | CrawlingStatusPage (크롤링 현황) | 실제 API (`/api/posts`) |
+| `/crawl-accounts` | CrawlAccountPage (크롤 계정 관리) | 실제 API (`/api/crawl-accounts`) |
 
 ### 실제 DB 스키마
 
+| # | 테이블명 | 설명 |
+|---|----------|------|
+| ① | `social_platform` | SNS 플랫폼 마스터 (instagram, youtube, x, tiktok) |
+| ② | `brand` | 브랜드 기본 정보 |
+| ③ | `brand_social_channel` | 브랜드 × 플랫폼 × 지역 매핑 (채널 URL) |
+| ④ | `brand_assignee` | 브랜드 담당자 및 소셜 계정 ID 관리 |
+| ⑤ | `social_post_crawl` | 수집된 게시물 원본 데이터 (메인 적재) |
+| ⑥ | `social_crawl_account` | 크롤링용 로그인 계정 (AES-256-GCM 암호화) |
+| ⑦ | `social_crawl_exclude_keyword` | 정크/수집 필터 키워드 관리 |
+
 ```sql
--- brand: 플랫폼별 계정 단위
--- UNIQUE KEY uq_brand_platform_handle (brand_name, platform, account_handle)
-brand_id BIGINT PK AUTO_INCREMENT,
-brand_name VARCHAR(100) NOT NULL,
-platform VARCHAR(30) NOT NULL,        -- 'instagram' | 'tiktok' | 'twitter'
-account_handle VARCHAR(100) NOT NULL,
-is_active TINYINT(1) DEFAULT 1,
-created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE
+-- ① social_platform
+platform_id   VARCHAR(50)  PK   -- 'instagram' | 'youtube' | 'x' | 'tiktok'
+platform_name VARCHAR(100)
+created_at    DATETIME
 
--- post: 수집된 게시물 원본
--- UNIQUE KEY uq_platform_post (platform, external_post_id)
--- FK: brand_id → brand(brand_id)
-post_id BIGINT PK AUTO_INCREMENT,
-brand_id BIGINT NOT NULL,
-platform VARCHAR(30) NOT NULL,
-external_post_id VARCHAR(200) NOT NULL,
-content TEXT,
-media_urls JSON,
-hashtags JSON,
-likes INT DEFAULT 0,
-comments INT DEFAULT 0,
-shares INT DEFAULT 0,
-views BIGINT DEFAULT 0,
-posted_at DATETIME,
-crawled_at DATETIME DEFAULT CURRENT_TIMESTAMP
+-- ② brand
+brand_id    BIGINT  PK AUTO_INCREMENT
+brand_name  VARCHAR(100)
+created_at  DATETIME
+updated_at  DATETIME
+
+-- ③ brand_social_channel
+channel_id   BIGINT       PK AUTO_INCREMENT
+brand_id     BIGINT       FK → brand
+platform_id  VARCHAR(50)  FK → social_platform
+region       VARCHAR(10)  -- 'KR', 'HQ'
+channel_url  VARCHAR(200)
+UNIQUE KEY uq_brand_platform_region (brand_id, platform_id, region)
+
+-- ④ brand_assignee
+assignee_id   BIGINT       PK AUTO_INCREMENT
+brand_id      BIGINT       FK → brand
+platform_id   VARCHAR(50)  FK → social_platform
+assignee_name VARCHAR(50)
+account_id    VARCHAR(100) -- @handle
+is_active     TINYINT(1)
+
+-- ⑤ social_post_crawl (메인 적재 테이블)
+spc_id        BIGINT UNSIGNED  PK AUTO_INCREMENT
+platform_id   VARCHAR(50)      FK → social_platform
+crawl_case    VARCHAR(10)      -- 'CASE1' | 'CASE2'
+brand_name    VARCHAR(100)
+account_id    VARCHAR(200)
+post_id       VARCHAR(200)     -- Instagram shortcode 등
+post_url      VARCHAR(500)
+post_type     VARCHAR(30)      -- '릴스', '피드' 등
+posted_at     DATETIME
+text_content  TEXT
+hashtags      TEXT             -- JSON array
+person_tags   TEXT             -- JSON array
+media_url     VARCHAR(500)
+view_count    BIGINT
+like_count    BIGINT
+comment_count BIGINT
+share_count   BIGINT
+author_name   VARCHAR(200)     -- CASE2 전용
+author_followers BIGINT        -- CASE2 전용
+is_duplicate  TINYINT(1)
+is_junk       TINYINT(1)
+raw_data      JSON
+UNIQUE KEY uq_platform_post (platform_id, post_id)
+
+-- ⑥ social_crawl_account
+account_id   BIGINT UNSIGNED  PK AUTO_INCREMENT
+name         VARCHAR(100)
+platform_id  VARCHAR(50)      FK → social_platform
+login_id     VARCHAR(200)     -- AES-256-GCM 암호화
+login_pw     VARCHAR(500)     -- AES-256-GCM 암호화
+issue        TEXT
+status       VARCHAR(20)      -- 'ACTIVE' | 'BLOCKED' | 'EXPIRED' | 'PAUSED'
+UNIQUE KEY uq_platform_login_id (platform_id, login_id)
+
+-- ⑦ social_crawl_exclude_keyword
+keyword_id     BIGINT UNSIGNED  PK AUTO_INCREMENT
+keyword_type   VARCHAR(20)      -- 'JUNK' | 'CASE2_FILTER'
+platform_id    VARCHAR(50)      FK → social_platform
+brand_id       BIGINT UNSIGNED  -- NULL: 전체 공통
+filter_keyword VARCHAR(500)
+junk_keyword   VARCHAR(500)
+match_type     VARCHAR(20)      -- 'CONTAINS' | 'EXACT' | 'REGEX'
+is_active      TINYINT(1)
 ```
-
-**참고**: `CrawlJobRepository`가 참조하는 `crawl_jobs` 테이블은 DDL에 미정의 (향후 추가 필요)
 
 ### API 엔드포인트
 
 | Method | Path | 파라미터 | 설명 |
 |--------|------|---------|------|
-| GET | `/api/posts` | `?platform=`, `?page=`, `?size=20`, `?sort=crawledAt,desc` | 게시물 목록 (Spring Page 응답) |
-| GET | `/api/posts/{postId}` | - | 게시물 단건 조회 (404 시 empty) |
+| GET | `/api/posts` | `platformId`, `brandName`, `crawlCase`, `postedFrom`, `postedTo`, `page`, `size`(기본 20), `sort` | 게시물 목록 (페이징 + QueryDSL 다중 필터) |
+| GET | `/api/posts/{spcId}` | - | 게시물 단건 조회 |
+| GET | `/api/assignees` | - | 담당자 목록 조회 |
+| GET | `/api/crawl-accounts` | - | 크롤 계정 목록 (loginPw 미포함) |
+| GET | `/api/crawl-accounts/{id}` | - | 크롤 계정 단건 조회 (loginPw 미포함) |
+| GET | `/api/crawl-accounts/{id}/decrypt` | - | loginId + loginPw 원문 복호화 반환 |
+| POST | `/api/crawl-accounts` | `SocialCrawlAccountRequest` | 크롤 계정 생성 (201) |
+| PUT | `/api/crawl-accounts/{id}` | `SocialCrawlAccountRequest` | 크롤 계정 수정 |
+| DELETE | `/api/crawl-accounts/{id}` | - | 크롤 계정 삭제 (204) |
 
 ### 환경 변수
 
@@ -297,10 +357,10 @@ make setup-python && make crawler  # Python 크롤러 로컬 실행
 
 ### 중복 방지 전략
 
-- DB: `UNIQUE KEY uq_platform_post (platform, external_post_id)`
+- DB: `UNIQUE KEY uq_platform_post (platform_id, post_id)` (`social_post_crawl` 테이블)
 - Python Repository: `SocialPostRepository.save()` → `INSERT ... ON DUPLICATE KEY UPDATE`
 - Python Repository: `SocialPostRepository.exists()` → 저장 전 존재 여부 확인
-- Crawler: `BaseCrawler.crawl()` → `deduped dict` 로 동일 세션 내 중복 제거
+- Crawler: `seen_ids` set으로 동일 세션 내 중복 스킵
 
 ### 자격증명 암호화 (social_crawl_account)
 
@@ -325,13 +385,23 @@ make setup-python && make crawler  # Python 크롤러 로컬 실행
 
 ### 개발 진행 상태 및 잠재적 이슈
 
-1. **Crawler 테스트 모드**: `main.py`가 `run_all_test()`를 호출 (DB 연결 없이 하드코딩 데이터 사용). `CrawlService.run()`에서 저장/필터/알림 로직 대부분 주석 처리
-2. **SQLAlchemy vs PyMySQL 이중 구조**: `db.py` + `models.py` (SQLAlchemy, 전체 주석)와 `config/database.py` + `resource/repository.py` (PyMySQL raw)가 공존. 정리 필요
+| 항목 | 상태 |
+|------|------|
+| Instagram CASE1 (공식 계정 수집) | 구현 완료 |
+| Instagram CASE2 (해시태그 검색) | 코드 작성됨, 비활성 |
+| DB 저장 연동 | 구현 완료 |
+| 정크 키워드 필터링 | 코드 작성됨, 미연결 |
+| Slack 알림 | 코드 작성됨, 미연결 |
+| TikTok / X 크롤러 | 미구현 |
+| AI 요약 (Claude) | 미구현 |
+| Frontend 실제 API 연동 | 구현 완료 (DashboardPage, CrawlingStatusPage, CrawlAccountPage) |
+| 크롤 계정 관리 CRUD | 구현 완료 (Backend API + Frontend CrawlAccountPage) |
+
+**잠재적 이슈**
+
+1. **Crawler 테스트 모드**: `main.py`가 `run_all_test()` 호출. `CrawlService.run()`에서 저장/필터/알림 로직 대부분 주석 처리
+2. **SQLAlchemy vs PyMySQL 이중 구조**: `db.py` + `models.py` (전체 주석)와 `config/database.py` + `repository.py` (PyMySQL raw) 공존 — 정리 필요
 3. **crawl_jobs 테이블 미존재**: `CrawlJobRepository`가 참조하나 DDL 미정의
-4. **social_posts vs post 테이블명 불일치**: Repository SQL은 `social_posts` 참조, DDL은 `post` 테이블. Backend Entity도 `post` 매핑
-5. **MUI 버전 혼용**: package.json에 MUI v5 core + MUI v7 icons/system 혼용 (호환성 이슈 가능)
-6. **Frontend 샘플 데이터 의존**: DashboardPage, CrawlingStatusPage가 하드코딩 데이터 사용. 실제 API 연동 미완
-7. **Instagram crawl_search()**: `return None` 하드코딩 (미구현)
-8. **TikTok/Twitter 크롤러**: 미구현 (crawler_map에 주석 처리)
-9. **yesterday_range() 테스트 하드코딩**: 10일 전 ~ 어제로 설정됨 (운영 시 수정 필요)
-10. **CrawlJobRepository.finish()**: `finished_at` 컬럼 SET 절 중복
+4. **Instagram crawl_search()**: `return None` 하드코딩 (CASE2 미구현)
+5. **yesterday_range() 테스트 하드코딩**: 10일 전 ~ 어제로 설정됨 (운영 시 수정 필요)
+6. **CrawlJobRepository.finish()**: `finished_at` 컬럼 SET 절 중복
