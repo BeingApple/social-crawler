@@ -112,8 +112,8 @@ collected_at, period
   - `BaseCrawler` ABC 패턴으로 플랫폼별 크롤러 확장 (현재 Instagram만 구현)
   - `CrawlService`가 오케스트레이션: brand 조회 → crawler 실행 → 필터링 → 저장 → 알림
   - Repository 패턴: `BrandRepository`, `SocialPostRepository`, `CrawlJobRepository` (raw PyMySQL)
-- **Backend**: Spring 표준 레이어드 (Controller → Repository → Entity)
-  - Service 레이어 없이 Controller → Repository 직접 호출
+- **Backend**: Spring 표준 레이어드 (Controller → Service → Repository → Entity)
+  - 신규 코드는 Service 레이어 필수 (기존 일부는 Controller → Repository 직접 호출이나 점진적 개선 대상)
   - QueryDSL 기반 동적 쿼리 (`SocialPostCrawlRepositoryCustom` / `SocialPostCrawlRepositoryImpl`)
 - **Frontend**: 페이지 기반 라우팅, 전 페이지 실제 API 연동 완료
   - DashboardPage → `/api/assignees`, CrawlingStatusPage → `/api/posts`, CrawlAccountPage → `/api/crawl-accounts`
@@ -380,7 +380,7 @@ make setup-python && make crawler  # Python 크롤러 로컬 실행
 - **Instagram 크롤링**: Playwright async → `asyncio.run()` 동기 래퍼 패턴
 - **봇 감지 우회**: 모바일 뷰포트(iPhone 14 Pro Max), webdriver 프로퍼티 오버라이드, User-Agent 로테이션, 랜덤 딜레이
 - **세션 관리**: Playwright storage_state를 파일로 저장/복원 (`instagram_storage.json`)
-- **Backend**: Service 레이어 없이 Controller → Repository 직접 호출 (현재 읽기 전용이므로 적절)
+- **Backend**: Controller → Service → Repository 레이어 구조 사용 (신규 코드 기준)
 - **Frontend**: LNB(좌측 네비게이션 바) + 헤더 + 메인 콘텐츠 레이아웃
 
 ### 개발 진행 상태 및 잠재적 이슈
