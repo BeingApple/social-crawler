@@ -4,7 +4,7 @@ import type { SelectChangeEvent } from '@mui/material'
 import DataTable from '../components/dashboard/DataTable'
 import { fetchAssignees } from '../api/assignees'
 import type { BrandAssignee, AssigneeFilters } from '../types/brand'
-import { PLATFORM_OPTIONS } from '../constants/platform'
+import { usePlatforms } from '../hooks/usePlatforms'
 
 const REGION_OPTIONS = ['KR', 'HQ']
 
@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [assignees, setAssignees] = useState<BrandAssignee[]>([])
   const [filters, setFilters]     = useState<AssigneeFilters>(INITIAL_FILTERS)
   const [error, setError]         = useState<string | null>(null)
+  const { platforms }             = usePlatforms()
 
   useEffect(() => {
     fetchAssignees()
@@ -58,8 +59,8 @@ export default function DashboardPage() {
               <InputLabel>소셜 미디어</InputLabel>
               <Select value={filters.platformId} label="소셜 미디어" onChange={handleSelect('platformId')}>
                 <MenuItem value="">전체</MenuItem>
-                {PLATFORM_OPTIONS.map(({ value, label }) => (
-                  <MenuItem key={value} value={value}>{label}</MenuItem>
+                {platforms.map((p) => (
+                  <MenuItem key={p.platformId} value={p.platformId}>{p.platformName}</MenuItem>
                 ))}
               </Select>
             </FormControl>

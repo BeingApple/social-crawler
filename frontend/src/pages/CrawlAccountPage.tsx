@@ -17,7 +17,8 @@ import type {
   SocialCrawlAccountRequest,
   AccountStatus,
 } from '../types/crawlAccount'
-import { PLATFORM_OPTIONS } from '../constants/platform'
+import { usePlatforms } from '../hooks/usePlatforms'
+import type { SocialPlatform } from '../api/platforms'
 
 // ─── 상수 ───────────────────────────────────────────────────────────────────
 
@@ -71,13 +72,14 @@ const columns: GridColDef<Row>[] = [
 // ─── 폼 다이얼로그 ───────────────────────────────────────────────────────────
 
 interface FormDialogProps {
-  open:      boolean
+  open:       boolean
   editTarget: SocialCrawlAccount | null
-  onClose:   () => void
-  onSaved:   () => void
+  platforms:  SocialPlatform[]
+  onClose:    () => void
+  onSaved:    () => void
 }
 
-function FormDialog({ open, editTarget, onClose, onSaved }: FormDialogProps) {
+function FormDialog({ open, editTarget, platforms, onClose, onSaved }: FormDialogProps) {
   const [form, setForm]     = useState<SocialCrawlAccountRequest>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState<string | null>(null)
@@ -133,8 +135,8 @@ function FormDialog({ open, editTarget, onClose, onSaved }: FormDialogProps) {
         <FormControl size="small" fullWidth required>
           <InputLabel>플랫폼</InputLabel>
           <Select value={form.platformId} label="플랫폼" onChange={handleSelect('platformId')}>
-            {PLATFORM_OPTIONS.map(({ value, label }) => (
-              <MenuItem key={value} value={value}>{label}</MenuItem>
+            {platforms.map((p) => (
+              <MenuItem key={p.platformId} value={p.platformId}>{p.platformName}</MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -231,6 +233,7 @@ export default function CrawlAccountPage() {
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState<string | null>(null)
   const [selection, setSelection]     = useState<GridRowSelectionModel>([])
+  const { platforms }                 = usePlatforms()
 
   const [formOpen, setFormOpen]       = useState(false)
   const [editTarget, setEditTarget]   = useState<SocialCrawlAccount | null>(null)
@@ -333,6 +336,7 @@ export default function CrawlAccountPage() {
       <FormDialog
         open={formOpen}
         editTarget={editTarget}
+        platforms={platforms}
         onClose={() => setFormOpen(false)}
         onSaved={load}
       />

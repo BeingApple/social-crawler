@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Box, Typography, Paper, Grid, TextField,
   FormControl, InputLabel, Select, MenuItem, Card, CardContent, Link,
@@ -7,126 +7,29 @@ import type { SelectChangeEvent } from '@mui/material'
 import { DataGrid, GridColDef, GridPaginationModel, GridRenderCellParams } from '@mui/x-data-grid'
 import { fetchPosts } from '../api/posts'
 import type { SocialPostCrawl, FetchPostsParams } from '../types/post'
-import { PLATFORM_LABELS, PLATFORM_OPTIONS } from '../constants/platform'
+import { usePlatforms } from '../hooks/usePlatforms'
 
-const CRAWL_CASE_OPTIONS   = [
+const CRAWL_CASE_OPTIONS = [
   { value: 'CASE1', label: 'CASE1 (공식계정)' },
   { value: 'CASE2', label: 'CASE2 (키워드검색)' },
 ]
 
 type Row = SocialPostCrawl & { id: number }
 
-const columns: GridColDef<Row>[] = [
-  { field: 'brandName',   headerName: '브랜드명',       width: 110 },
-  {
-    field: 'platformId',
-    headerName: '소셜 미디어',
-    width: 120,
-    valueFormatter: (value: string) => PLATFORM_LABELS[value] ?? value,
-  },
-  { field: 'crawlCase',   headerName: '수집 유형',       width: 110 },
-  { field: 'accountId',   headerName: '계정명',          width: 130 },
-  {
-    field: 'authorFollowers',
-    headerName: '팔로워수',
-    width: 100,
-    type: 'number',
-    valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
-  },
-  {
-    field: 'postUrl',
-    headerName: '게시글 바로가기',
-    width: 130,
-    renderCell: ({ value }: GridRenderCellParams<Row, string>) => (
-      <Link href={value} target="_blank" rel="noopener" underline="hover" fontSize={13}>
-        바로가기
-      </Link>
-    ),
-  },
-  {
-    field: 'postedAt',
-    headerName: '업로드 날짜',
-    width: 120,
-    valueFormatter: (value: string) => value ? new Date(value).toLocaleDateString('ko-KR') : '-',
-  },
-  {
-    field: 'mediaUrl',
-    headerName: '이미지',
-    width: 80,
-    renderCell: ({ value }: GridRenderCellParams<Row, string | null>) =>
-      value ? (
-        <Box component="img" src={value} alt="post" sx={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 1 }} />
-      ) : (
-        <Box sx={{ width: 40, height: 40, bgcolor: '#e0e0e0', borderRadius: 1 }} />
-      ),
-  },
-  { field: 'postTitle',    headerName: '게시글 제목',    width: 160 },
-  { field: 'textContent',  headerName: '게시글 내용',    width: 220 },
-  {
-    field: 'hashtags',
-    headerName: '해시태그',
-    width: 180,
-    renderCell: ({ value }: GridRenderCellParams<Row, string | null>) => {
-      if (!value) return '-'
-      try {
-        const tags: string[] = JSON.parse(value)
-        return tags.join(' ')
-      } catch {
-        return value
-      }
-    },
-  },
-  {
-    field: 'personTags',
-    headerName: '인물태그',
-    width: 160,
-    renderCell: ({ value }: GridRenderCellParams<Row, string | null>) => {
-      if (!value) return '-'
-      try {
-        const tags: string[] = JSON.parse(value)
-        return tags.join(', ')
-      } catch {
-        return value
-      }
-    },
-  },
-  {
-    field: 'likeCount',
-    headerName: '좋아요',
-    width: 80,
-    type: 'number',
-    valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
-  },
-  {
-    field: 'commentCount',
-    headerName: '댓글',
-    width: 80,
-    type: 'number',
-    valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
-  },
-  {
-    field: 'viewCount',
-    headerName: '조회수',
-    width: 90,
-    type: 'number',
-    valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
-  },
-]
-
 interface Filters {
-  dateFrom:    string
-  dateTo:      string
-  brandName:   string
-  platformId:  string
-  crawlCase:   string
+  dateFrom:   string
+  dateTo:     string
+  brandName:  string
+  platformId: string
+  crawlCase:  string
 }
 
 const INITIAL_FILTERS: Filters = {
-  dateFrom:    '',
-  dateTo:      '',
-  brandName:   '',
-  platformId:  '',
-  crawlCase:   '',
+  dateFrom:   '',
+  dateTo:     '',
+  brandName:  '',
+  platformId: '',
+  crawlCase:  '',
 }
 
 export default function CrawlingStatusPage() {
@@ -137,17 +40,115 @@ export default function CrawlingStatusPage() {
   const [pageSize, setPageSize] = useState(20)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
+  const { platforms, platformLabels } = usePlatforms()
+
+  const columns = useMemo<GridColDef<Row>[]>(() => [
+    { field: 'brandName',  headerName: '브랜드명',    width: 110 },
+    {
+      field: 'platformId',
+      headerName: '소셜 미디어',
+      width: 120,
+      valueFormatter: (value: string) => platformLabels[value] ?? value,
+    },
+    { field: 'crawlCase',  headerName: '수집 유형',    width: 110 },
+    { field: 'accountId',  headerName: '계정명',       width: 130 },
+    {
+      field: 'authorFollowers',
+      headerName: '팔로워수',
+      width: 100,
+      type: 'number',
+      valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
+    },
+    {
+      field: 'postUrl',
+      headerName: '게시글 바로가기',
+      width: 130,
+      renderCell: ({ value }: GridRenderCellParams<Row, string>) => (
+        <Link href={value} target="_blank" rel="noopener" underline="hover" fontSize={13}>
+          바로가기
+        </Link>
+      ),
+    },
+    {
+      field: 'postedAt',
+      headerName: '업로드 날짜',
+      width: 120,
+      valueFormatter: (value: string) => value ? new Date(value).toLocaleDateString('ko-KR') : '-',
+    },
+    {
+      field: 'mediaUrl',
+      headerName: '이미지',
+      width: 80,
+      renderCell: ({ value }: GridRenderCellParams<Row, string | null>) =>
+        value ? (
+          <Box component="img" src={value} alt="post" sx={{ width: 40, height: 40, objectFit: 'cover', borderRadius: 1 }} />
+        ) : (
+          <Box sx={{ width: 40, height: 40, bgcolor: '#e0e0e0', borderRadius: 1 }} />
+        ),
+    },
+    { field: 'postTitle',   headerName: '게시글 제목', width: 160 },
+    { field: 'textContent', headerName: '게시글 내용', width: 220 },
+    {
+      field: 'hashtags',
+      headerName: '해시태그',
+      width: 180,
+      renderCell: ({ value }: GridRenderCellParams<Row, string | null>) => {
+        if (!value) return '-'
+        try {
+          const tags: string[] = JSON.parse(value)
+          return tags.join(' ')
+        } catch {
+          return value
+        }
+      },
+    },
+    {
+      field: 'personTags',
+      headerName: '인물태그',
+      width: 160,
+      renderCell: ({ value }: GridRenderCellParams<Row, string | null>) => {
+        if (!value) return '-'
+        try {
+          const tags: string[] = JSON.parse(value)
+          return tags.join(', ')
+        } catch {
+          return value
+        }
+      },
+    },
+    {
+      field: 'likeCount',
+      headerName: '좋아요',
+      width: 80,
+      type: 'number',
+      valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
+    },
+    {
+      field: 'commentCount',
+      headerName: '댓글',
+      width: 80,
+      type: 'number',
+      valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
+    },
+    {
+      field: 'viewCount',
+      headerName: '조회수',
+      width: 90,
+      type: 'number',
+      valueFormatter: (value: number | null) => value != null ? value.toLocaleString() : '-',
+    },
+  ], [platformLabels])
 
   useEffect(() => {
     setLoading(true)
     setError(null)
 
     const params: FetchPostsParams = {
-      platformId:  filters.platformId  || undefined,
-      brandName:   filters.brandName   || undefined,
-      crawlCase:   filters.crawlCase   || undefined,
-      postedFrom:  filters.dateFrom    || undefined,
-      postedTo:    filters.dateTo      || undefined,
+      platformId:  filters.platformId || undefined,
+      brandName:   filters.brandName  || undefined,
+      crawlCase:   filters.crawlCase  || undefined,
+      postedFrom:  filters.dateFrom   || undefined,
+      postedTo:    filters.dateTo     || undefined,
       page,
       size: pageSize,
     }
@@ -221,8 +222,8 @@ export default function CrawlingStatusPage() {
               <InputLabel>소셜 미디어</InputLabel>
               <Select value={filters.platformId} label="소셜 미디어" onChange={handleSelect('platformId')}>
                 <MenuItem value="">전체</MenuItem>
-                {PLATFORM_OPTIONS.map(({ value, label }) => (
-                  <MenuItem key={value} value={value}>{label}</MenuItem>
+                {platforms.map((p) => (
+                  <MenuItem key={p.platformId} value={p.platformId}>{p.platformName}</MenuItem>
                 ))}
               </Select>
             </FormControl>
