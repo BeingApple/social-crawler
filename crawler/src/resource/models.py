@@ -67,7 +67,6 @@ class BrandAssignee(Base):
     platform_id:   Mapped[str]      = mapped_column(String(50), ForeignKey("social_platform.platform_id"), nullable=False, comment="social_platform.platform_id 참조")
     assignee_name: Mapped[str]      = mapped_column(String(50),  nullable=False, comment="담당자명")
     account_id:    Mapped[str]      = mapped_column(String(100), nullable=False, comment="소셜 미디어 계정 아이디")
-    account_type:  Mapped[str]      = mapped_column(String(30), nullable=False, comment="소셜 미디어 계정 Type")
     is_active:     Mapped[int]      = mapped_column(SmallInteger, nullable=False, default=1, comment="활성화 상태 (1: 활성, 0: 비활성)")
     created_at:    Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     updated_at:    Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
@@ -95,6 +94,7 @@ class SocialPostCrawl(Base):
     crawl_case:   Mapped[str] = mapped_column(String(10),  nullable=False, comment="수집 유형 (CASE1: 공식계정, CASE2: 키워드검색)")
     brand_name:   Mapped[str] = mapped_column(String(100), nullable=False, comment="브랜드명")
     account_id:   Mapped[str] = mapped_column(String(200), nullable=False, comment="계정 ID/핸들")
+    account_type: Mapped[str] = mapped_column(String(10),  nullable=False, comment="계정 유형 (brand_social_channel.region 참조: KR, HQ 등)")
 
     # 게시물 정보
     post_id:      Mapped[str]      = mapped_column(String(200), nullable=False, comment="게시물 고유 ID")
@@ -105,7 +105,7 @@ class SocialPostCrawl(Base):
     text_content: Mapped[str|None] = mapped_column(Text,        comment="게시물 텍스트/캡션")
     person_tags:  Mapped[str|None] = mapped_column(Text,        comment="인물태그 목록 (JSON array)")
     hashtags:     Mapped[str|None] = mapped_column(Text,        comment="해시태그 목록 (JSON array)")
-    media_url:    Mapped[str|None] = mapped_column(String(500), comment="미디어(이미지/영상) URL (첫 번째 미디어)")
+    media_url:    Mapped[str|None] = mapped_column(Text, comment="미디어(이미지/영상) URL (첫 번째 미디어, CDN signed URL로 장문 가능)")
 
     # 통계
     view_count:    Mapped[int|None] = mapped_column(BigInteger, comment="조회수")

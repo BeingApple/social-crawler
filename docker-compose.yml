@@ -43,6 +43,8 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD:-crawler1234}
       # 크롤 주기 (초 단위, 기본 1시간)
       CRAWL_INTERVAL_SEC: ${CRAWL_INTERVAL_SEC:-3600}
+      # AES-256-GCM 암호화 키 (backend와 반드시 동일한 값 사용)
+      ENCRYPTION_SECRET_KEY: ${ENCRYPTION_SECRET_KEY:-ChangeThisSecretKeyInProduction!!}
     volumes:
       - ./crawler/src:/app/src   # 소스 핫리로드 (개발용)
 
@@ -63,6 +65,8 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-crawler}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-crawler1234}
       SPRING_PROFILES_ACTIVE: local
+      # AES-256-GCM 암호화 키 (crawler와 반드시 동일한 값 사용)
+      ENCRYPTION_SECRET_KEY: ${ENCRYPTION_SECRET_KEY:-ChangeThisSecretKeyInProduction!!}
     ports:
       - "8080:8080"
 

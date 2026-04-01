@@ -25,26 +25,25 @@ class BrandConfig:
 
 @dataclass
 class BrandAssignee:
-    """크롤링용 로그인 계정 (social_crawl_account)."""
+    """브랜드 담당자 (brand_assignee)."""
 
     assignee_id: int
     brand_id: int
     platform_id: str
     assignee_name: str
     account_id: str
-    account_type: str
     is_active: int
 
 @dataclass
 class BrandAssigneeWithBrand:
-    """BrandAssignee + Brand 정보를 담는 DTO."""
+    """BrandAssignee + Brand + BrandSocialChannel 정보를 담는 DTO."""
     assignee_id: int
     brand_id: int
-    brand_name: str  # Brand에서 가져온 값
+    brand_name: str
     platform_id: str
     assignee_name: str
     account_id: str
-    account_type: str
+    region: str | None  # brand_social_channel.region (KR, HQ 등)
     is_active: int = 1
 
 @dataclass
@@ -74,6 +73,7 @@ class SocialPost:
     post_url: str
     posted_at: datetime
 
+    account_type: str = 'HQ'  # brand_social_channel.region (KR, HQ 등)
     post_type: str | None = None
     post_title: str | None = None
     text_content: str | None = None

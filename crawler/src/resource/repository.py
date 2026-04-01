@@ -4,7 +4,7 @@ from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import Session
 
 from src.common.types import CrawlAccount, SocialPost, BrandAssigneeWithBrand
-from src.resource.models import Brand, SocialCrawlAccount, SocialCrawlExcludeKeyword, SocialPostCrawl, SocialPlatform, BrandAssignee
+from src.resource.models import Brand, BrandSocialChannel, SocialCrawlAccount, SocialCrawlExcludeKeyword, SocialPostCrawl, SocialPlatform, BrandAssignee
 
 
 class SocialCrawlAccountRepository:
@@ -46,11 +46,16 @@ class SocialCrawlAccountRepository:
             for row in rows
         ]
 
-    """크롤링용 Brand 조회 (brand_assignee)."""
+    """크롤링용 Brand 조회 (brand_assignee JOIN brand JOIN brand_social_channel)."""
     def brand_social_list(self, platform_id: str | None = None) -> list[BrandAssigneeWithBrand]:
         stmt = (
-            select(BrandAssignee, Brand.brand_name)
+            select(BrandAssignee, Brand.brand_name, BrandSocialChannel.region)
             .join(Brand, BrandAssignee.brand_id == Brand.brand_id)
+            .outerjoin(
+                BrandSocialChannel,
+                (BrandAssignee.brand_id == BrandSocialChannel.brand_id)
+                & (BrandAssignee.platform_id == BrandSocialChannel.platform_id),
+            )
             .where(BrandAssignee.is_active == 1)
         )
 
@@ -67,10 +72,10 @@ class SocialCrawlAccountRepository:
                 platform_id=assignee.platform_id,
                 assignee_name=assignee.assignee_name,
                 account_id=assignee.account_id,
-                account_type=assignee.account_type,
+                region=region,
                 is_active=assignee.is_active,
             )
-            for assignee, brand_name in rows
+            for assignee, brand_name, region in rows
         ]
 
 
@@ -94,6 +99,7 @@ class SocialPostCrawlRepository:
             crawl_case=post.crawl_case,
             brand_name=post.brand_name,
             account_id=post.account_id,
+            account_type=post.account_type,
             post_id=post.post_id,
             post_url=post.post_url,
             post_type=post.post_type,

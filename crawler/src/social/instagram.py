@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import random
 import re
 import time
@@ -45,18 +44,20 @@ class InstagramCrawler(BaseCrawler):
             proxy: dict[str, str] | None = None,
             user_agent: str | None = None,
             headless: bool = False,
+            username: str | None = None,
+            password: str | None = None,
     ) -> None:
         self._proxy = proxy
         self._user_agent = user_agent or random_user_agent()
         self._headless = headless
 
-        # 쿠키 저장 경로
-        self._storage_dir = Path(__file__).resolve().parent.parent.parent
-        self._storage_file = self._storage_dir / "instagram_storage.json"
+        self._username = username or ""
+        self._password = password or ""
 
-        # 인증 정보
-        self._username = os.getenv("INSTAGRAM_USERNAME", "")
-        self._password = os.getenv("INSTAGRAM_PASSWORD", "")
+        # 쿠키 저장 경로 — 계정별 세션 파일 분리 (세션 혼용 방지)
+        self._storage_dir = Path(__file__).resolve().parent.parent.parent
+        safe_name = self._username.replace("@", "").replace("/", "_") if self._username else "default"
+        self._storage_file = self._storage_dir / f"instagram_storage_{safe_name}.json"
 
         # Playwright 객체 (lazy init)
         self._playwright: Playwright | None = None
@@ -374,6 +375,7 @@ class InstagramCrawler(BaseCrawler):
         """공식 계정 크롤링 (비동기)"""
         start_time = time.perf_counter()
         posts: list[SocialPost] = []
+        page = None
 
         try:
             context = await self._init_browser()
@@ -449,6 +451,11 @@ class InstagramCrawler(BaseCrawler):
             logger.error("instagram crawl failed for @%s: %s", handle, e)
             return posts
         finally:
+            if page:
+                try:
+                    await page.close()
+                except Exception:
+                    pass
             elapsed_ms = int((time.perf_counter() - start_time) * 1000)
             logger.info(
                 "instagram crawl done handle=%s found=%d elapsed_ms=%d",

@@ -276,7 +276,7 @@ posted_at     DATETIME
 text_content  TEXT
 hashtags      TEXT             -- JSON array
 person_tags   TEXT             -- JSON array
-media_url     VARCHAR(500)
+media_url     TEXT             -- CDN signed URL로 장문 가능
 view_count    BIGINT
 like_count    BIGINT
 comment_count BIGINT
