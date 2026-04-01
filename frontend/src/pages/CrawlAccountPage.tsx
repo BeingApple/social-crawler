@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
-  Typography, Paper, Card, CardContent, Button, Chip,
+  Typography, Card, CardContent, Button, Chip,
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, FormControl, InputLabel, Select, MenuItem,
   IconButton, Tooltip, Box,
@@ -65,7 +65,7 @@ const columns: GridColDef<Row>[] = [
     field: 'updatedAt',
     headerName: '수정일시',
     width: 160,
-    valueFormatter: (v: string) => v ? new Date(v).toLocaleString('ko-KR') : '-',
+    valueFormatter: (v: string | null) => v ? new Date(v).toLocaleString('ko-KR') : '-',
   },
 ]
 
@@ -96,11 +96,11 @@ function FormDialog({ open, editTarget, platforms, onClose, onSaved }: FormDialo
   }, [open, editTarget])
 
   const handleText = (field: keyof SocialCrawlAccountRequest) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
   const handleSelect = (field: keyof SocialCrawlAccountRequest) =>
-    (e: SelectChangeEvent<string>) =>
+    (e: SelectChangeEvent) =>
       setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
   const handleSubmit = async () => {
@@ -321,7 +321,7 @@ export default function CrawlAccountPage() {
             rows={rows}
             columns={columns}
             loading={loading}
-            autoHeight
+            sx={{ width: '100%' }}
             checkboxSelection
             disableMultipleRowSelection
             rowSelectionModel={selection}

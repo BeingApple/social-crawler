@@ -259,7 +259,7 @@ export default function CrawlingStatusPage() {
             paginationModel={{ page, pageSize }}
             onPaginationModelChange={handlePaginationChange}
             pageSizeOptions={[10, 20, 50]}
-            autoHeight
+            sx={{ width: '100%' }}
             checkboxSelection
             disableRowSelectionOnClick
           />
