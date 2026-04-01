@@ -22,7 +22,7 @@ class CrawlService:
         self.keyword_repo = keyword_repo
         self.notifier = notifier
 
-        self.instagram = InstagramCrawler(headless=False)
+        self.instagram = InstagramCrawler(headless=True)
         #self.tiktok = TikTokCrawler()
         #self.twitter = TwitterCrawler()
 

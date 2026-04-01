@@ -36,17 +36,14 @@ def main() -> None:
     logger.info("Crawler started. Interval=%ds", INTERVAL)
 
     # 시작 즉시 1회 실행
-    #run_all_test()
     run_all()
 
     # 이후 주기 실행
-    #schedule.every(INTERVAL).seconds.do(run_all_test)
+    schedule.every(INTERVAL).seconds.do(run_all)
 
-    '''
     while True:
         schedule.run_pending()
         time.sleep(10)
-    '''
 
 
 def run_all():
