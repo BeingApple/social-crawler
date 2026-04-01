@@ -50,7 +50,7 @@ frontend :3000 ──/api/*──► backend:8080
 |------|------|
 | **Crawler** | Python 3.11, Playwright, BeautifulSoup4, SQLAlchemy 2.0, schedule |
 | **Backend** | Java 21, Spring Boot 3.3, Spring Data JPA, Lombok |
-| **Frontend** | React 18, **TypeScript 5.5**, Vite 5, MUI v5, MUI X DataGrid, React Router v6, axios |
+| **Frontend** | React 18, **TypeScript 5.5**, Vite 8, MUI v7, MUI X DataGrid v7, React Router v6, axios |
 | **DB** | MySQL 8.0 (Aurora MySQL 8.0 호환) |
 | **인프라** | Docker Compose, nginx (프론트 서빙 + API 프록시) |
 

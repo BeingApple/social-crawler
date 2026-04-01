@@ -2,6 +2,7 @@ import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { Box, Typography, List, ListItemButton, ListItemText, Divider } from '@mui/material'
 import DashboardPage from './pages/DashboardPage'
 import CrawlingStatusPage from './pages/CrawlingStatusPage'
+import CrawlAccountPage from './pages/CrawlAccountPage'
 
 const LNB_WIDTH = 220
 
@@ -11,6 +12,12 @@ const NAV_GROUPS = [
     items: [
       { label: '계정 리스트', path: '/accounts' },
       { label: '크롤링 현황', path: '/crawling' },
+    ],
+  },
+  {
+    group: '설정',
+    items: [
+      { label: '크롤 계정 관리', path: '/crawl-accounts' },
     ],
   },
 ]
@@ -135,6 +142,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/accounts" replace />} />
             <Route path="/accounts" element={<DashboardPage />} />
             <Route path="/crawling" element={<CrawlingStatusPage />} />
+            <Route path="/crawl-accounts" element={<CrawlAccountPage />} />
           </Routes>
         </Box>
       </Box>
