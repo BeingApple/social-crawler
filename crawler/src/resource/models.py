@@ -67,6 +67,7 @@ class BrandAssignee(Base):
     platform_id:   Mapped[str]      = mapped_column(String(50), ForeignKey("social_platform.platform_id"), nullable=False, comment="social_platform.platform_id 참조")
     assignee_name: Mapped[str]      = mapped_column(String(50),  nullable=False, comment="담당자명")
     account_id:    Mapped[str]      = mapped_column(String(100), nullable=False, comment="소셜 미디어 계정 아이디")
+    account_type:  Mapped[str]      = mapped_column(String(30), nullable=False, comment="소셜 미디어 계정 Type")
     is_active:     Mapped[int]      = mapped_column(SmallInteger, nullable=False, default=1, comment="활성화 상태 (1: 활성, 0: 비활성)")
     created_at:    Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     updated_at:    Mapped[datetime] = mapped_column(DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))

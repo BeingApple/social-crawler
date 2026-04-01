@@ -1,4 +1,4 @@
-from src.common.types import BrandConfig
+from src.common.types import BrandAssignee
 from src.common.utils import yesterday_range
 from src.resource.repository import (
     SocialCrawlAccountRepository,
@@ -38,21 +38,29 @@ class CrawlService:
         total_found = 0
         total_saved = 0
 
-        crawler_map = {
+        platforms = self.account_repo.social_list()
+        available_crawlers = {
             "instagram": self.instagram,
             #"tiktok": self.tiktok,
             #"twitter": self.twitter,
         }
 
-        for platform, crawler in crawler_map.items():
+        crawler_map = {
+            p.platform_id: available_crawlers[p.platform_id]
+            for p in platforms
+            if p.platform_id in available_crawlers
+        }
 
-            targets = self.account_repo.list_active(platform)
+        for platform, crawler in crawler_map.items():
+            print(f"#platform : " + platform)
+            targets = self.account_repo.brand_social_list(platform)
             #targets = self._get_test_targets()  #Test
+            print(f"#platform: " + platform + ", #targets: " + str(len(targets)))
 
             for target in targets:
-                handle = getattr(target, f"{platform}_handle", None)
-
-                print(f"platform: {platform}, handle: {handle}")
+                #handle = getattr(target, f"{platform}_handle", None)
+                handle = target.account_id
+                print(f"@platform: {platform}, platform_id: {handle}")
 
                 if not handle:
                     continue
@@ -63,12 +71,11 @@ class CrawlService:
                     posts = crawler.crawl(
                         brand_name=target.brand_name,
                         handle=handle,
-                        search_keywords=target.search_keywords,
+                        search_keywords=[],
                         start_dt=start_dt,
                         end_dt=end_dt,
                     )
 
-                    '''
                     # TODO: DB 이관 후 brand_id를 brand 테이블에서 조회하여 전달
                     junk_keywords = self.keyword_repo.list_junk_keywords(platform, None)
                     filtered_posts = [
@@ -88,6 +95,7 @@ class CrawlService:
                     total_found += len(filtered_posts)
                     total_saved += len(saved_posts)
 
+                    '''
                     if saved_posts:
                         summary = self.summary_service.summarize(target.brand_name, saved_posts)
                         self.notifier.send_summary(
@@ -111,12 +119,14 @@ class CrawlService:
         }
 
     @staticmethod
-    def _get_test_targets() -> list[BrandConfig]:
+    def _get_test_targets() -> list[BrandAssignee]:
         return [
-            BrandConfig(
-                brand_name="인스타그램",
-                instagram_handle="instagram",
-                #instagram_handle="musinsa.official",
-                search_keywords=[],
+            BrandAssignee(
+                brand_id="인스타그램",
+                platform_id="instagram",  #platform_id="musinsa.official",
+                assignee_name="test",
+                account_id="test",
+                account_type="HQ",
+                is_active=1
             )
         ]

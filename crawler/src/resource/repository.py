@@ -3,18 +3,33 @@ from sqlalchemy import or_, select
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import Session
 
-from src.common.types import CrawlAccount, SocialPost
-from src.resource.models import SocialCrawlAccount, SocialCrawlExcludeKeyword, SocialPostCrawl
+from src.common.types import CrawlAccount, SocialPost, BrandAssigneeWithBrand
+from src.resource.models import Brand, SocialCrawlAccount, SocialCrawlExcludeKeyword, SocialPostCrawl, SocialPlatform, BrandAssignee
 
 
 class SocialCrawlAccountRepository:
-    """크롤링용 로그인 계정 조회 (social_crawl_account)."""
 
     def __init__(self, session: Session):
         self.session = session
 
+    """크롤링 Social 조회 (social_platform)."""
+    def social_list(self) -> list[SocialPlatform]:
+        stmt = select(SocialPlatform)
+
+        rows = self.session.execute(stmt).scalars().all()
+        return [
+            SocialPlatform(
+                platform_id=row.platform_id,
+                platform_name=row.platform_name,
+                created_at=row.created_at,
+            )
+            for row in rows
+        ]
+
+    """크롤링용 로그인 계정 조회 (social_crawl_account)."""
     def list_active(self, platform_id: str | None = None) -> list[CrawlAccount]:
         stmt = select(SocialCrawlAccount).where(SocialCrawlAccount.status == "ACTIVE")
+
         if platform_id:
             stmt = stmt.where(SocialCrawlAccount.platform_id == platform_id)
 
@@ -29,6 +44,33 @@ class SocialCrawlAccountRepository:
                 status=row.status,
             )
             for row in rows
+        ]
+
+    """크롤링용 Brand 조회 (brand_assignee)."""
+    def brand_social_list(self, platform_id: str | None = None) -> list[BrandAssigneeWithBrand]:
+        stmt = (
+            select(BrandAssignee, Brand.brand_name)
+            .join(Brand, BrandAssignee.brand_id == Brand.brand_id)
+            .where(BrandAssignee.is_active == 1)
+        )
+
+        if platform_id:
+            stmt = stmt.where(BrandAssignee.platform_id == platform_id)
+
+        rows = self.session.execute(stmt).all()
+
+        return [
+            BrandAssigneeWithBrand(
+                assignee_id=assignee.assignee_id,
+                brand_id=assignee.brand_id,
+                brand_name=brand_name,
+                platform_id=assignee.platform_id,
+                assignee_name=assignee.assignee_name,
+                account_id=assignee.account_id,
+                account_type=assignee.account_type,
+                is_active=assignee.is_active,
+            )
+            for assignee, brand_name in rows
         ]
 
 
