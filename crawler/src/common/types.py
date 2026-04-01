@@ -3,6 +3,13 @@ from datetime import datetime
 
 
 @dataclass
+class SocialPlatform:
+    """SNS 플랫폼 마스터 (social_platform)."""
+
+    platform_id: str
+    platform_name: str
+
+@dataclass
 class BrandConfig:
     """크롤링 대상 브랜드 설정 (임시 — 향후 DB 테이블로 이관 예정).
 
@@ -16,6 +23,29 @@ class BrandConfig:
     instagram_handle: str | None = None          # → brand_assignee.account_id (platform_id='instagram')
     search_keywords: list[str] = field(default_factory=list)  # → social_crawl_exclude_keyword (CASE2_FILTER)
 
+@dataclass
+class BrandAssignee:
+    """크롤링용 로그인 계정 (social_crawl_account)."""
+
+    assignee_id: int
+    brand_id: int
+    platform_id: str
+    assignee_name: str
+    account_id: str
+    account_type: str
+    is_active: int
+
+@dataclass
+class BrandAssigneeWithBrand:
+    """BrandAssignee + Brand 정보를 담는 DTO."""
+    assignee_id: int
+    brand_id: int
+    brand_name: str  # Brand에서 가져온 값
+    platform_id: str
+    assignee_name: str
+    account_id: str
+    account_type: str
+    is_active: int = 1
 
 @dataclass
 class CrawlAccount:

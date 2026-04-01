@@ -39,11 +39,11 @@ def main() -> None:
     run_all()
 
     # 이후 주기 실행
-    schedule.every(INTERVAL).seconds.do(run_all)
+    #schedule.every(INTERVAL).seconds.do(run_all)
 
-    while True:
-        schedule.run_pending()
-        time.sleep(10)
+    #while True:
+    #    schedule.run_pending()
+    #    time.sleep(10)
 
 
 def run_all():

@@ -437,9 +437,11 @@ class InstagramCrawler(BaseCrawler):
                         raw_data=node,
                     )
                 )
+            '''
             logger.info("########### posts : ")
             for post in posts:
                 logger.info(post)
+            '''
 
             return posts
 
