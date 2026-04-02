@@ -14,7 +14,7 @@ class SocialCrawlAccountRepository:
 
     """크롤링 Social 조회 (social_platform)."""
     def social_list(self) -> list[SocialPlatform]:
-        stmt = select(SocialPlatform)
+        stmt = select(SocialPlatform).where(SocialPlatform.is_active == 1)
 
         rows = self.session.execute(stmt).scalars().all()
         return [

@@ -19,6 +19,7 @@ class SocialPlatform(Base):
 
     platform_id:   Mapped[str]      = mapped_column(String(50),  primary_key=True, comment="플랫폼 식별키 (instagram, youtube, x, tiktok)")
     platform_name: Mapped[str]      = mapped_column(String(100), nullable=False,   comment="플랫폼 표시명")
+    is_active:     Mapped[int]      = mapped_column(SmallInteger, nullable=False, default=1, comment="활성화 상태 (1: 활성, 0: 비활성)")
     created_at:    Mapped[datetime] = mapped_column(DateTime,    nullable=False,   default=lambda: datetime.now(UTC))
 
 

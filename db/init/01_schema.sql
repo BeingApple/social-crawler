@@ -11,6 +11,7 @@ SET CHARACTER SET utf8mb4;
 CREATE TABLE IF NOT EXISTS social_platform (
     platform_id     VARCHAR(50)     NOT NULL COMMENT '플랫폼 식별키 (instagram, youtube, x, tiktok)',
     platform_name   VARCHAR(100)    NOT NULL COMMENT '플랫폼 표시명',
+    is_active       TINYINT(1)      NOT NULL DEFAULT 1 COMMENT '활성화 상태 (1: 활성, 0: 비활성)',
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (platform_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
