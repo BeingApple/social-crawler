@@ -80,6 +80,7 @@ class SocialPost:
     person_tags: list[str] = field(default_factory=list)
     hashtags: list[str] = field(default_factory=list)
     media_url: str | None = None
+    thumbnail_url: str | None = None
 
     # 통계
     view_count: int | None = None

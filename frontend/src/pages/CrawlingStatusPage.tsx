@@ -76,7 +76,7 @@ export default function CrawlingStatusPage() {
       valueFormatter: (value: string) => value ? new Date(value).toLocaleDateString('ko-KR') : '-',
     },
     {
-      field: 'mediaUrl',
+      field: 'thumbnailUrl',
       headerName: '이미지',
       width: 80,
       renderCell: ({ value }: GridRenderCellParams<Row, string | null>) =>

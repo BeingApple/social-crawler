@@ -102,7 +102,18 @@ backend만 변경  → backend 독립 실행
 
 ## ③ 에이전트 실행
 
-의존성 그래프에 따라 에이전트를 순차 또는 병렬로 실행한다.
+### 서브 에이전트 사용 기준
+
+아래 기준으로 판단하여 Agent 툴 사용 여부를 결정한다.
+
+**서브 에이전트를 사용한다:**
+- 병렬 가능(`‖`) 모듈 → 단일 응답에서 Agent 툴을 **동시에 여러 개** 호출 (필수)
+- 파일 3개 이상 읽기/수정이 필요한 모듈
+- 어느 파일을 수정해야 할지 탐색이 필요한 경우
+
+**메인에서 직접 처리한다:**
+- 수정 파일이 1~2개이고 위치와 내용이 이미 명확한 경우
+- 에이전트 생성 오버헤드가 작업 규모보다 큰 경우
 
 ### 에이전트 공통 지침 (각 에이전트 프롬프트에 포함)
 
@@ -127,7 +138,7 @@ backend만 변경  → backend 독립 실행
 ```
 역할: crawler/ 디렉토리의 Python 크롤러 코드 수정
 기술: Python 3.11, Playwright async, PyMySQL raw cursor, asyncio
-패턴: 
+패턴:
   - BaseCrawler ABC 상속 패턴 (crawl_official_account, crawl_search)
   - Repository 패턴 (BrandRepository, SocialPostRepository)
   - DatabaseConfig 싱글턴 커넥션 (config/database.py)

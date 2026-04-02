@@ -61,6 +61,9 @@ public class SocialPostCrawl {
     @Column(length = 500)
     private String mediaUrl;
 
+    @Lob
+    private String thumbnailUrl;
+
     // 통계
     private Long viewCount;
     private Long likeCount;

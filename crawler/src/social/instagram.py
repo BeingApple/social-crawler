@@ -31,6 +31,7 @@ class InstagramPageData:
     mentions: list[str] = field(default_factory=list)
     hashtags: list[str] = field(default_factory=list)
     posted_at: datetime | None = None
+    thumbnail_url: str | None = None
 
 
 class InstagramCrawler(BaseCrawler):
@@ -226,13 +227,13 @@ class InstagramCrawler(BaseCrawler):
             video_versions = node.get("video_versions") or []
             media_url = video_versions[0].get("url", "") if video_versions else ""
 
+            candidates = node.get("image_versions2", {}).get("candidates", [])
             if not media_url:
-                # 비디오가 없으면 이미지 URL 사용
-                media_url = (
-                    node.get("image_versions2", {})
-                    .get("candidates", [{}])[0]
-                    .get("url", "")
-                )
+                # 비디오가 없으면 이미지 URL 사용 (candidates[0] = 가장 큰 이미지)
+                media_url = candidates[0].get("url", "") if candidates else ""
+
+            # 썸네일: candidates 마지막 요소 = 가장 작은 이미지
+            thumbnail_url = candidates[-1].get("url") if candidates else None
 
             caption = node.get("caption") or {}
             content = caption.get("text", "") if isinstance(caption, dict) else ""
@@ -259,6 +260,7 @@ class InstagramCrawler(BaseCrawler):
                 comments=node.get("comment_count", 0),
                 views=views,
                 posted_at=posted_at,
+                thumbnail_url=thumbnail_url,
             )
         except Exception as e:
             logger.warning("failed to parse graphql node: %s", e)
@@ -430,6 +432,7 @@ class InstagramCrawler(BaseCrawler):
                         hashtags=post_data.hashtags,
                         person_tags=post_data.mentions,
                         media_url=post_data.media_url,
+                        thumbnail_url=post_data.thumbnail_url,
                         like_count=post_data.likes,
                         comment_count=post_data.comments,
                         view_count=post_data.views,
@@ -534,6 +537,7 @@ class InstagramCrawler(BaseCrawler):
                                 hashtags=post_data.hashtags,
                                 person_tags=post_data.mentions,
                                 media_url=post_data.media_url,
+                                thumbnail_url=post_data.thumbnail_url,
                                 like_count=post_data.likes,
                                 comment_count=post_data.comments,
                                 view_count=post_data.views,

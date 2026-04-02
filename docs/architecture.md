@@ -148,6 +148,7 @@ text_content     TEXT              -- 캡션/본문 텍스트
 person_tags      TEXT              -- 인물 태그 목록 (JSON array)
 hashtags         TEXT              -- 해시태그 목록 (JSON array)
 media_url        VARCHAR(500)      -- 첫 번째 미디어(이미지/영상) URL
+thumbnail_url    TEXT              -- 썸네일 이미지 URL (image_versions2 최소 크기)
 
 -- 통계
 view_count       BIGINT
@@ -286,6 +287,7 @@ Instagram 내부 GraphQL 응답(`xdt_api__v1__feed__user_timeline_graphql_connec
 | `node.taken_at` | `posted_at` | Unix timestamp → KST datetime 변환 |
 | `node.video_versions[0].url` | `media_url` | 영상 URL (비디오 우선) |
 | `node.image_versions2.candidates[0].url` | `media_url` | 이미지 URL (비디오 없을 때) |
+| `node.image_versions2.candidates[-1].url` | `thumbnail_url` | 썸네일 URL (candidates 마지막 = 최소 크기) |
 | `node.like_count` | `like_count` | 좋아요 수 |
 | `node.comment_count` | `comment_count` | 댓글 수 |
 | `node.view_count` 또는 `node.play_count` | `view_count` | 조회수 (릴스의 경우 play_count) |

@@ -14,6 +14,7 @@ export interface SocialPostCrawl {
   personTags: string | null
   hashtags: string | null
   mediaUrl: string | null
+  thumbnailUrl: string | null
   viewCount: number | null
   likeCount: number | null
   commentCount: number | null

@@ -105,7 +105,8 @@ class SocialPostCrawl(Base):
     text_content: Mapped[str|None] = mapped_column(Text,        comment="게시물 텍스트/캡션")
     person_tags:  Mapped[str|None] = mapped_column(Text,        comment="인물태그 목록 (JSON array)")
     hashtags:     Mapped[str|None] = mapped_column(Text,        comment="해시태그 목록 (JSON array)")
-    media_url:    Mapped[str|None] = mapped_column(Text, comment="미디어(이미지/영상) URL (첫 번째 미디어, CDN signed URL로 장문 가능)")
+    media_url:     Mapped[str|None] = mapped_column(Text, comment="미디어(이미지/영상) URL (첫 번째 미디어, CDN signed URL로 장문 가능)")
+    thumbnail_url: Mapped[str|None] = mapped_column(Text, comment="썸네일 이미지 URL (image_versions2 최소 크기)")
 
     # 통계
     view_count:    Mapped[int|None] = mapped_column(BigInteger, comment="조회수")

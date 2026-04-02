@@ -25,6 +25,7 @@ public class SocialPostCrawlResponse {
     private String personTags;
     private String hashtags;
     private String mediaUrl;
+    private String thumbnailUrl;
     private Long viewCount;
     private Long likeCount;
     private Long commentCount;
@@ -52,6 +53,7 @@ public class SocialPostCrawlResponse {
                 .personTags(post.getPersonTags())
                 .hashtags(post.getHashtags())
                 .mediaUrl(post.getMediaUrl())
+                .thumbnailUrl(post.getThumbnailUrl())
                 .viewCount(post.getViewCount())
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())

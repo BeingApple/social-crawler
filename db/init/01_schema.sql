@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS social_post_crawl (
     person_tags      TEXT            NULL     COMMENT '인물태그 목록 (JSON array)',
     hashtags         TEXT            NULL     COMMENT '해시태그 목록 (JSON array)',
     media_url        TEXT            NULL     COMMENT '미디어(이미지/영상) URL (첫 번째 미디어, CDN signed URL로 장문 가능)',
+    thumbnail_url    TEXT            NULL     COMMENT '썸네일 이미지 URL (image_versions2 최소 크기)',
     -- 통계
     view_count       BIGINT          NULL     COMMENT '조회수',
     like_count       BIGINT          NULL     COMMENT '좋아요 수',
