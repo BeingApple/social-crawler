@@ -2,6 +2,7 @@ import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { Box, Typography, List, ListItemButton, ListItemText, Divider } from '@mui/material'
 import DashboardPage from './pages/DashboardPage'
 import CrawlingStatusPage from './pages/CrawlingStatusPage'
+import PostDetailPage from './pages/PostDetailPage'
 import CrawlAccountPage from './pages/CrawlAccountPage'
 
 const LNB_WIDTH = 220
@@ -142,6 +143,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/accounts" replace />} />
             <Route path="/accounts" element={<DashboardPage />} />
             <Route path="/crawling" element={<CrawlingStatusPage />} />
+            <Route path="/crawling/:spcId" element={<PostDetailPage />} />
             <Route path="/crawl-accounts" element={<CrawlAccountPage />} />
           </Routes>
         </Box>

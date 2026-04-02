@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Box, Typography, Paper, Grid, TextField,
-  FormControl, InputLabel, Select, MenuItem, Card, CardContent, Link,
+  FormControl, InputLabel, Select, MenuItem, Card, CardContent, Link, Button,
 } from '@mui/material'
 import type { SelectChangeEvent } from '@mui/material'
 import { DataGrid, GridColDef, GridPaginationModel, GridRenderCellParams } from '@mui/x-data-grid'
@@ -33,6 +34,7 @@ const INITIAL_FILTERS: Filters = {
 }
 
 export default function CrawlingStatusPage() {
+  const navigate = useNavigate()
   const [filters, setFilters]   = useState<Filters>(INITIAL_FILTERS)
   const [rows, setRows]         = useState<Row[]>([])
   const [total, setTotal]       = useState(0)
@@ -43,6 +45,17 @@ export default function CrawlingStatusPage() {
   const { platforms, platformLabels } = usePlatforms()
 
   const columns = useMemo<GridColDef<Row>[]>(() => [
+    {
+      field: 'detail',
+      headerName: '',
+      width: 72,
+      sortable: false,
+      renderCell: ({ row }: GridRenderCellParams<Row>) => (
+        <Button size="small" onClick={() => navigate(`/crawling/${row.spcId}`)}>
+          상세
+        </Button>
+      ),
+    },
     { field: 'brandName',  headerName: '브랜드명',    width: 110 },
     {
       field: 'platformId',
