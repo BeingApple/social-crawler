@@ -7,8 +7,8 @@
       <env name="SPRING_DATASOURCE_PASSWORD" value="crawler1234" />
       <env name="SPRING_PROFILES_ACTIVE" value="local" />
     </envs>
-    <module name="backend.main" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="com.musinsa.crawler.CrawlerApplication" />
+    <module name="com.crawler.backend.main" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.crawler.CrawlerApplication" />
     <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8" />
     <method v="2">
       <option name="Make" enabled="true" />

@@ -4,7 +4,7 @@
 
 ## 프로젝트 개요
 
-무신사 입점 브랜드의 소셜 미디어 데이터를 **매일 전날 기준**으로 수집하고, AI 요약 후 Slack으로 알림을 제공하는 크롤링 파이프라인.
+브랜드의 소셜 미디어 데이터를 **매일 전날 기준**으로 수집하고, AI 요약 후 Slack으로 알림을 제공하는 크롤링 파이프라인.
 
 ## 수집 대상
 
@@ -40,9 +40,9 @@ frontend :3000 ──/api/*──► backend:8080
 
 ## 인프라
 
-- 서버: dev EC2 (무신사 내부)
-- DB: dev DB (무신사 내부)
-- Slack Hook / Claude Hook: 무신사 제공
+- 서버: dev EC2
+- DB: dev DB
+- Slack Hook / Claude Hook: 내부 제공
 
 ## 기술 스택 (구현 완료)
 
@@ -58,7 +58,7 @@ frontend :3000 ──/api/*──► backend:8080
 
 ```sql
 -- 브랜드
-brand_id, brand_name, musinsa_brand_code,
+brand_id, brand_name, brand_code,
 instagram_handle, tiktok_username, twitter_handle,
 created_at, updated_at, is_active
 

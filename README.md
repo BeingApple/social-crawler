@@ -1,8 +1,6 @@
 # brand-social-crawler
 
-무신사 입점 브랜드의 소셜 미디어 데이터를 수집하고, AI 요약 후 Slack으로 알림을 제공하는 크롤링 파이프라인.
-
-> Jira: [MZMSS-31](https://jira.team.musinsa.com/browse/MZMSS-31) | 프로젝트: 클레임개발팀-운영효율화
+브랜드의 소셜 미디어 데이터를 수집하고, AI 요약 후 Slack으로 알림을 제공하는 크롤링 파이프라인.
 
 ---
 
@@ -156,8 +154,3 @@ posted_at, crawled_at
 
 ---
 
-## 관련 링크
-
-- Jira: [MZMSS-31](https://jira.team.musinsa.com/browse/MZMSS-31)
-- 명세서: [Confluence](https://wiki.team.musinsa.com/wiki/spaces/MEGAZONE/pages/356399021/)
-- 브랜드 계정 정의: [스프레드시트](https://docs.google.com/spreadsheets/d/1le01exs1CFnnHMgYVU20ohQP1Rzg6TN0A_uNE3fuRbU/edit?gid=0#gid=0)

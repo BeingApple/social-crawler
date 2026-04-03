@@ -6,7 +6,7 @@
 - 실행: python -m src.main 또는 make crawler
 
 ## Backend
-- backend/src/main/java/com/musinsa/crawler/CrawlerApplication.java
+- backend/src/main/java/com/crawler/CrawlerApplication.java
 - 실행: ./gradlew bootRun --args='--spring.profiles.active=local' 또는 make backend
 
 ## Frontend

@@ -44,7 +44,7 @@ function Lnb() {
           variant="subtitle2"
           sx={{ color: '#8888aa', fontWeight: 600, letterSpacing: 1, fontSize: 11 }}
         >
-          MUSINSA
+          BRAND
         </Typography>
       </Box>
 

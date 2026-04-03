@@ -48,7 +48,7 @@ brand-social-crawler/
 │       └── common/types.py        # SocialPost, BrandAssigneeWithBrand, CrawlAccount 데이터클래스
 │
 ├── backend/                        # Spring Boot REST API
-│   └── src/main/java/com/musinsa/crawler/
+│   └── src/main/java/com/crawler/
 │       ├── domain/entity/          # JPA 엔티티 (SocialPostCrawl, SocialCrawlAccount, BrandAssignee 등)
 │       ├── domain/repository/      # JpaRepository + QueryDSL (SocialPostCrawlRepositoryImpl)
 │       ├── service/                # SocialPostCrawlService, SocialCrawlAccountService, AssigneeService

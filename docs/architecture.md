@@ -4,7 +4,7 @@
 
 ## 1. 프로젝트 개요
 
-무신사 입점 브랜드의 소셜 미디어 데이터를 매일 전날 기준으로 수집하고, 정크 필터링·중복 제거 후 DB에 저장하는 크롤링 파이프라인입니다.  
+브랜드의 소셜 미디어 데이터를 매일 전날 기준으로 수집하고, 정크 필터링·중복 제거 후 DB에 저장하는 크롤링 파이프라인입니다.  
 현재 1차 개발 범위는 Instagram(공식 계정 수집)이며, 향후 TikTok / X(Twitter)로 확장 예정입니다.
 
 ---
@@ -348,7 +348,7 @@ Instagram 내부 GraphQL 응답(`xdt_api__v1__feed__user_timeline_graphql_connec
 ### 7-2. 구현 위치
 
 ```
-backend/src/main/java/com/musinsa/crawler/
+backend/src/main/java/com/crawler/
 └── common/
     └── AesEncryptionUtil.java      # @Component, encrypt() / decrypt()
 ```
